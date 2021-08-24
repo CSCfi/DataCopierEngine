@@ -4,23 +4,34 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+
+import org.jboss.logging.Logger;
+import io.quarkus.runtime.StartupEvent;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 /*import software.amazon.awssdk.auth.AWSCredentials;
 import software.amazon.awssdk.auth.AWSStaticCredentialsProvider;
 import software.amazon.awssdk.auth.BasicAWSCredentials;*/
 
-public class Main {
+@ApplicationScoped
+public class ApplicationLifecycle {
 
+    @Inject
+    Logger log;
     /*private static final String FILENAME = "~/.s3cfg";
     private static final String SECTRETKEY = "secret_key =";
     private static final String ACCESSKEY = "access_key =";*/
     //software.amazon.awssdk.http.crt.AwsCrtAsyncHttpClient
 
-    public static void main(String[] args) {
+    void onStart(@Observes StartupEvent event) {
+        log.info("Running");
         /*String[] keys = lueTiedosto(FILENAME);
         String accesskey = keys[0];
         String secretkey = keys[1];

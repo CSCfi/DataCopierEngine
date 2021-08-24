@@ -1,17 +1,15 @@
 package fi.csc.data;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
 import io.quarkus.runtime.StartupEvent;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
+import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -31,37 +29,37 @@ public class ApplicationLifecycle {
     //software.amazon.awssdk.http.crt.AwsCrtAsyncHttpClient
 
     void onStart(@Observes StartupEvent event) {
-        log.info("Running");
-        /*String[] keys = lueTiedosto(FILENAME);
-        String accesskey = keys[0];
-        String secretkey = keys[1];
-        AWSCredentials credentials = new BasicAWSCredentials(accesskey, secretkey);*/
+        //log.info("Running");
+
+        /*AWSCredentials credentials = new BasicAWSCredentials(accesskey, secretkey);*/
         S3Client s3 = S3Client.builder()
                 .region(Region.of("US"))
                 //.withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .endpointOverride(URI.create("https://a3s.fi")).build();
-        //ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
         ListBucketsResponse listBucketsResponse = s3.listBuckets();
-        listBucketsResponse.buckets().stream().forEach(x -> System.out.println(x.name()));
+        Bucket b = listBucketsResponse.buckets().stream().
+                filter(x -> x.name().equals("public")).findFirst().orElse(null);
+        if (null != b) {
+            //log.info("Buketti löytyi");
+            ListObjectsV2Iterable paginator = s3.listObjectsV2Paginator(
+                    ListObjectsV2Request.builder()
+                            .bucket(b.name())
+                            .encodingType("UTF-8").build());
+            //List<S3Object> objects = result.contents();
+            Iterator<CommonPrefix> foldersIterator = paginator.commonPrefixes().iterator();
+            /*while (foldersIterator.hasNext()) {
+                foldersIterator.next();
+            }*/
+            AtomicInteger n = new AtomicInteger();
+            for (ListObjectsV2Response page : paginator) {
+                page.contents().forEach((S3Object object) -> {
+                    n.getAndIncrement();
+                    System.out.println(object.key());
+                });
+            }
+            log.info("Sisältää: "+n);
+       }
     }
 
-    /*
-    private static String[] lueTiedosto(String filename) {
 
-        String[] keys = new String[2];
-        String inputLine;
-        Boolean eivielälöydetty = true;
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            while ((inputLine = reader.readLine()) != null) {
-                if (inputLine.startsWith(SECTRETKEY))
-                    keys[1] =  inputLine.substring(SECTRETKEY.length()).trim();
-                if (eivielälöydetty && inputLine.startsWith(ACCESSKEY)) {
-                    keys[0] = inputLine.substring(ACCESSKEY.length()).trim();
-                    eivielälöydetty = false;
-                }
-            }
-        }  catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-    }*/
 }

@@ -7,11 +7,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.native-distroless -t quarkus/oai-pmh .
+# docker build -f src/main/docker/Dockerfile.native-distroless -t quarkus/copyengine .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/oai-pmh
+# docker run -i --rm -p 8080:8080 quarkus/copyengine
 #
 ###
 FROM quay.io/quarkus/quarkus-distroless-image:1.0

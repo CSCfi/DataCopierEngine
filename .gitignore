@@ -19,6 +19,11 @@ bin/
 
 # NetBeans
 nb-configuration.xml
+ IntelliJ
+.idea
+*.ipr
+*.iml
+*.iws
 
 # Visual Studio Code
 .vscode
@@ -37,3 +42,4 @@ nb-configuration.xml
 
 # Local environment
 .env
+/.idea/

@@ -15,6 +15,7 @@ import javax.jms.Session;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import fi.csc.data.model.CopyRequest;
+import static fi.csc.data.CoreResource.QUEQUENAME;
 
 @ApplicationScoped
 public class CopyEngine implements Runnable {
@@ -35,7 +36,7 @@ public class CopyEngine implements Runnable {
     @Override
     public void run() {
 try (JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE)) {
-            JMSConsumer consumer = context.createConsumer(context.createQueue("prices"));
+            JMSConsumer consumer = context.createConsumer(context.createQueue(QUEQUENAME));
             while (true) {
                 Message message = consumer.receive();
                 if (message == null) return;

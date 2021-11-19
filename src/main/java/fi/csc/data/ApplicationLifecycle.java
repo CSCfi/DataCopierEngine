@@ -28,7 +28,11 @@ public class ApplicationLifecycle implements QuarkusApplication {
  @Override
     public int run(String... args) throws Exception {
 
-     System.out.println("Hello " + args[1]);
+     if (args.length < 2) {
+         System.out.println("Hello World!");
+     } else {
+         System.out.println("Hello " + args[1]);
+     }
      try  {
          Connection connection = defaultDataSource.getConnection();
          log.info(Base.read(connection));

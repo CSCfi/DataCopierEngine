@@ -14,9 +14,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>2.4.1.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.4.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
-    <amazon.awssdk.version>2.17.24</amazon.awssdk.version>
+    <!-- amazon.awssdk.version>2.17.24</amazon.awssdk.version-->
   </properties>
 
   <pluginRepositories>
@@ -36,26 +36,24 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-    <dependency>
+    <!--dependency>
     <groupId>software.amazon.awssdk</groupId>
     <artifactId>bom</artifactId>
     <version>${amazon.awssdk.version}</version>
     <type>pom</type>
     <scope>import</scope>
-   </dependency>
+   </dependency-->
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <dependency>
+    <!--dependency>
     <groupId>software.amazon.awssdk</groupId>
     <artifactId>s3</artifactId>
-      <!--version>${amazon.awssdk.version}</version-->
   </dependency>
     <dependency>
     <groupId>software.amazon.awssdk</groupId>
     <artifactId>auth</artifactId>
-    <!--version>${amazon.awssdk.version}</version-->
-</dependency>
+</dependency-->
     <dependency>
        <groupId>io.quarkus</groupId>
        <artifactId>quarkus-jdbc-mariadb</artifactId>

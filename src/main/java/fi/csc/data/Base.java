@@ -10,17 +10,24 @@ import java.sql.SQLException;
  */
 public class Base {
 
-    final static String SELECT = "SELECT * FROM request";
+    /*final static String SELECT = "SELECT source.PalveluID, source.Protokolla, source.omistaja, " +
+            "source.polku, auths.username, aauths.accessKey, auths.secretKey, auths.projectID, auths.token, " +
+            "destination.PalveluID, destination.Protokolla, destination.omistaja, " +
+            "destination.polku, ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token" +
+            "FROM request r, palvelu source, palvelu destination, auth auths, auth ad " +
+            "WHERE r.source = source.caseid AND r.destination = destination.caseid AND" +
+            "source.Auth = auths.authid AND destination.Auth = ad.authid";*/
 
-    static /*CopyRequest*/ int read(Connection con) {
+    final static String SELECT = "SELECT source.PalveluID, source.Protokolla, source.omistaja, source.polku, auths.username, auths.accessKey, auths.secretKey, auths.projectID, auths.token, destination.PalveluID, destination.Protokolla, destination.omistaja,  destination.polku, ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token FROM request r, palvelu source, palvelu destination, auth auths, auth ad WHERE r.source = source.caseid AND r.destination = destination.caseid AND source.Auth = auths.authid AND destination.Auth = ad.authid";
+
+    static ResultSet read(Connection con) {
         try {
             PreparedStatement statement = con.prepareStatement(SELECT);
             ResultSet rs = statement.executeQuery();
-            rs.afterLast();
-            return rs.getRow();
+            return rs;
         } catch (SQLException e) {
             e.printStackTrace();
-            return -1;
+            return null;
         }
     }
 }

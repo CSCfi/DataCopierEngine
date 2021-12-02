@@ -11,7 +11,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
@@ -35,13 +37,22 @@ public class ApplicationLifecycle implements QuarkusApplication {
      }
      try  {
          Connection connection = defaultDataSource.getConnection();
-         log.info(Base.read(connection));
-         Process process = Runtime.getRuntime().exec("/work/rclone --version");
-         StreamGobbler streamGobbler =
-                 new StreamGobbler(process.getInputStream(), System.out::println);
-         Executors.newSingleThreadExecutor().submit(streamGobbler);
-         int exitCode = process.waitFor();
-         assert exitCode == 0;
+         ResultSet rs = Base.read(connection);
+         if (null == rs) {
+             log.info("Nothing to do, rs was null");
+         } else {
+             if (rs.first()) {
+                 String source = (String) Const.palveluht.get(rs.getInt(1));
+                 log.info("Source: "+source);
+
+                 Process process = Runtime.getRuntime().exec("/work/rclone --version");
+                 StreamGobbler streamGobbler =
+                         new StreamGobbler(process.getInputStream(), System.out::println);
+                 Executors.newSingleThreadExecutor().submit(streamGobbler);
+                 int exitCode = process.waitFor();
+                 assert exitCode == 0;
+             }
+         }
          connection.close();
     } catch (SQLException throwables) {
          throwables.printStackTrace();

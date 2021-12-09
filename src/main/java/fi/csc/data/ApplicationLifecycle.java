@@ -1,5 +1,6 @@
 package fi.csc.data;
 
+import fi.csc.data.model.RcloneConfig;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import org.jboss.logging.Logger;
@@ -42,8 +43,9 @@ public class ApplicationLifecycle implements QuarkusApplication {
              log.info("Nothing to do, rs was null");
          } else {
              if (rs.first()) {
-                 String source = (String) Const.palveluht.get(rs.getInt(1));
-                 log.info("Source: "+source);
+                 RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
+                 RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
+                 log.info("Source: "+source.type+ "Destination: "+destination.type);
 
                  Process process = Runtime.getRuntime().exec("/work/rclone --version");
                  StreamGobbler streamGobbler =
@@ -52,6 +54,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
                  int exitCode = process.waitFor();
                  assert exitCode == 0;
              }
+             rs.close();
          }
          connection.close();
     } catch (SQLException throwables) {

@@ -8,16 +8,11 @@ import org.jboss.logging.Logger;
 import javax.inject.Inject;
 import io.agroal.api.AgroalDataSource;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.function.Consumer;
-
 
 @QuarkusMain
 public class ApplicationLifecycle implements QuarkusApplication {
@@ -28,56 +23,38 @@ public class ApplicationLifecycle implements QuarkusApplication {
     @Inject
     AgroalDataSource defaultDataSource;
 
- @Override
+    @Override
     public int run(String... args) throws Exception {
 
-     if (args.length < 2) {
-         System.out.println("Hello World!");
-     } else {
-         System.out.println("Hello " + args[1]);
-     }
-     try  {
-         Connection connection = defaultDataSource.getConnection();
-         ResultSet rs = Base.read(connection);
-         if (null == rs) {
-             log.info("Nothing to do, rs was null");
-         } else {
-             if (rs.first()) {
-                 RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
-                 RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
-                 log.info("Source: "+source.type+ "Destination: "+destination.type);
+        if (args.length < 2) {
+            System.out.println("Hello World!");
+        } else {
+            System.out.println("Hello " + args[1]);
+        }
+        try {
+            Connection connection = defaultDataSource.getConnection();
+            ResultSet rs = Base.read(connection);
+            if (null == rs) {
+                log.info("Nothing to do, rs was null");
+            } else {
+                if (rs.first()) {
+                    RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
+                    RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
+                    log.info("Source: " + source.type + "Destination: " + destination.type);
 
-                 Process process = Runtime.getRuntime().exec("/work/rclone --version");
-                 StreamGobbler streamGobbler =
-                         new StreamGobbler(process.getInputStream(), System.out::println);
-                 Executors.newSingleThreadExecutor().submit(streamGobbler);
-                 int exitCode = process.waitFor();
-                 assert exitCode == 0;
-             }
-             rs.close();
-         }
-         connection.close();
-    } catch (SQLException throwables) {
-         throwables.printStackTrace();
-         return 10;
-     }
-    return 0;
+
+                }
+                Statement stmt = rs.getStatement();
+                rs.close();
+                stmt.close();
+            }
+            connection.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return 10;
+        }
+        return 0;
     }
 
 
-private static class StreamGobbler implements Runnable {
-    private InputStream inputStream;
-    private Consumer<String> consumer;
-
-    public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-        this.inputStream = inputStream;
-        this.consumer = consumer;
-    }
-
-    @Override
-    public void run() {
-        new BufferedReader(new InputStreamReader(inputStream)).lines()
-          .forEach(consumer);
-    }
-}
 }

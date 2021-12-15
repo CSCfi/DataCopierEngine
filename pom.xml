@@ -43,11 +43,11 @@
        <groupId>io.quarkus</groupId>
        <artifactId>quarkus-jdbc-mariadb</artifactId>
     </dependency>
-      <dependency>
+      <!--dependency>
        <groupId>fi.csc.data</groupId>
       <artifactId>copiercore</artifactId>
           <version>0.0.2</version>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-config-yaml</artifactId>

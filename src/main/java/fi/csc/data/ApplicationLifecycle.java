@@ -40,8 +40,17 @@ public class ApplicationLifecycle implements QuarkusApplication {
                 if (rs.first()) {
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
-                    log.info("Source: " + source.type + "Destination: " + destination.type);
-
+                    log.info("Source: " + source.type + " Destination: " + destination.type);
+                    RcloneRun rr = new RcloneRun();
+                    rr.config(source);
+                    rr.config(destination);
+                    String sourceToken = obscure(rs.getString(9), rr);
+                    String destinationToken = obscure(rs.getString(19), rr);
+                    log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
+                    String access_key_id = rs.getString(6);
+                    String secret_access_key = rs.getString(7);
+                    access_key_id = (null != access_key_id) ? access_key_id : rs.getString(16);
+                    secret_access_key =  (null != secret_access_key) ? secret_access_key : rs.getString(17);
 
                 }
                 Statement stmt = rs.getStatement();
@@ -56,5 +65,11 @@ public class ApplicationLifecycle implements QuarkusApplication {
         return 0;
     }
 
+    private String obscure(String token, RcloneRun rr) {
+        if (null == token) return null;
+        else {
+            return rr.obfuscate(token);
+        }
+    }
 
 }

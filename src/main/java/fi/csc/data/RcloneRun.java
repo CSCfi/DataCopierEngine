@@ -18,6 +18,12 @@ public class RcloneRun {
     static final String CREATE = "config create ";
     static final String VÄLILYÖNTI = " ";
 
+    /**
+     * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
+     *
+     * @param rc RcloneConfig source or destination
+     * @return int status 0 is success
+     */
     public int config(RcloneConfig rc) {
 
         StringBuilder komento = new StringBuilder(RCLONE);
@@ -41,8 +47,27 @@ public class RcloneRun {
             komento.append(THES3END);
         }
 
+        return realRun(komento.toString());
+    }
+
+    public String obfuscate(String token) {
         try {
-            Process process = Runtime.getRuntime().exec(komento.toString());
+            Process process = Runtime.getRuntime().exec(RCLONE + "obscure "+token);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            int exitCode = process.waitFor();
+            assert exitCode == 0;
+            return reader.readLine();
+           } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "error in obscure";
+    }
+
+    private int realRun(String komento) {
+        try {
+            Process process = Runtime.getRuntime().exec(komento);
 
             RcloneRun.StreamGobbler streamGobbler =
                     new RcloneRun.StreamGobbler(process.getInputStream(), System.out::println);
@@ -52,12 +77,11 @@ public class RcloneRun {
             return exitCode;
         } catch (IOException e) {
             e.printStackTrace();
-        }catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return -2;
     }
-
 
     private static class StreamGobbler implements Runnable {
         private InputStream inputStream;

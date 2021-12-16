@@ -4,11 +4,13 @@ import fi.csc.data.model.RcloneConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.util.concurrent.Executors;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.function.Consumer;
 
+import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.model.RcloneConfig.THES3END;
 
 
@@ -50,6 +52,13 @@ public class RcloneRun {
         return realRun(komento.toString());
     }
 
+    /**
+     * obscure token. rclone has nice security feature to not use clear tokens but somehow obfuscated
+     * Just run a rclone command obscure
+     *
+     * @param token String Token, password to access nextcloud
+     * @return String obfuscated token
+     */
     public String obfuscate(String token) {
         try {
             Process process = Runtime.getRuntime().exec(RCLONE + "obscure "+token);
@@ -81,6 +90,17 @@ public class RcloneRun {
             e.printStackTrace();
         }
         return -2;
+    }
+
+    public void copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
+        StringBuilder komento = new StringBuilder(RCLONE);
+        if (source.open && (ALLASPUBLIC == source.palvelu)) {
+            komento.append("copyurl ");
+            komento.append(source.polku);
+        } else {
+             komento.append("copy ");
+        }
+
     }
 
     private static class StreamGobbler implements Runnable {

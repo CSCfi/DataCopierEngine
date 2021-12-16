@@ -10,23 +10,32 @@ import static fi.csc.data.model.RcloneConfig.Vendor.nextcloud;
 
 public class Const {
 
+    public static final int IDA = 1;
+    public static final int IDASTAGING = 2;
+    public static final int FAIRDATAOPEN = 3;
+    public static final int FAIRDATACLOSED = 4;
+    public static final int ALLAS = 5;
+    public static final int ALLASPUBLIC = 6;
+    public static final int B2DROP = 7;
+
+
     static final String IDAURL = "https://ida.fairdata.fi/remote.php/webdav";
-    static final String IDA = "ida";
-    static final String ALLAS = "allas";
+    static final String IDAS = "ida";
+    static final String ALLASS = "allas";
     static final String ALLASURL = "a3s.fi";
 
     public static final Hashtable palveluht = new Hashtable<Integer, RcloneConfig>();
     public static final Hashtable cname = new Hashtable<Integer, String>();
 
     static {
-        palveluht.put(1, new RcloneConfig(1, webdav, nextcloud, IDAURL, false));
-        palveluht.put(2, new RcloneConfig(2, webdav, nextcloud, IDAURL, true));
-        palveluht.put(5, new RcloneConfig(5, s3, false, false));
-        palveluht.put(6, new RcloneConfig(6, s3, false, true));
+        palveluht.put(IDA, new RcloneConfig(1, webdav, nextcloud, IDAURL, false));
+        palveluht.put(IDASTAGING, new RcloneConfig(2, webdav, nextcloud, IDAURL, true));
+        palveluht.put(ALLAS, new RcloneConfig(5, s3, false, false));
+        palveluht.put(ALLASPUBLIC, new RcloneConfig(6, s3, false, true));
 
-        cname.put(1, IDA);
-        cname.put(2, IDA);
-        cname.put(5, ALLAS);
-        cname.put(6, ALLAS);
+        cname.put(IDA, IDAS);
+        cname.put(IDASTAGING, IDAS);
+        cname.put(ALLAS, ALLASS);
+        cname.put(ALLASPUBLIC, ALLASS);
     }
 }

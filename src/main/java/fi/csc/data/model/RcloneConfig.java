@@ -6,13 +6,18 @@ public class RcloneConfig {
     public enum Type {swift, s3, webdav}
     public enum Vendor { nextcloud }
 
-    public int palvelu;
-    public Type type;
-    public Vendor vendor;
-    public String url;
-    public boolean env_auth;
-    public boolean staging;
-    public boolean open;
+    public final int palvelu;
+    public final Type type;
+    public /*final*/ Vendor vendor;
+    public /*final*/ String url;
+    public /*final*/ boolean env_auth;
+    public /*final*/ boolean staging;
+    public /*final*/ boolean open;
+    public String token;
+    public String access_key_id;
+    public String secret_access_key;
+    public String polku;
+
 
     public RcloneConfig(int palvelu, Type type, Vendor vendor, String url, boolean staging) {
         this.palvelu = palvelu;

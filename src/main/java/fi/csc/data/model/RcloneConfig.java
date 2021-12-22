@@ -16,7 +16,9 @@ public class RcloneConfig {
     public String token;
     public String access_key_id;
     public String secret_access_key;
+    public String omistaja; //project tai Bucket
     public String polku;
+    public String username;
 
 
     public RcloneConfig(int palvelu, Type type, Vendor vendor, String url, boolean staging) {

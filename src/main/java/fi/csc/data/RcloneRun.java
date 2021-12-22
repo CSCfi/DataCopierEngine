@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.util.function.Consumer;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
+import static fi.csc.data.Const.IDASTAGING;
 import static fi.csc.data.model.RcloneConfig.THES3END;
 
 
@@ -19,6 +20,8 @@ public class RcloneRun {
     static final String RCLONE = "/work/rclone "; //kontissa, muista synckronoida dockerfilen kanssa
     static final String CREATE = "config create ";
     static final String VÄLILYÖNTI = " ";
+    static final String KAKSOISPISTE = ":";
+    static final String PLUS = "+";
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -74,6 +77,12 @@ public class RcloneRun {
         return "error in obscure";
     }
 
+    /**
+     * Sekä konfikuraatio että varsinainen rclone komennon suoritus
+     *
+     * @param komento String koko komentorivi, joka suoritetetaan
+     * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
+     */
     private int realRun(String komento) {
         try {
             Process process = Runtime.getRuntime().exec(komento);
@@ -92,15 +101,86 @@ public class RcloneRun {
         return -2;
     }
 
-    public void copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
+    /**
+     * Kopio rclonella tiedoston tai hakemiston idan ja altaan välillä (ehkä muukin toimii)
+     *
+     * @param source RcloneConfig olio, jossa lähdejärjestelmän tiedot
+     * @param destination RcloneConfig olio, jossa kohdejärjestelmän tiedot
+     * @param sourceToken String Idan terminologiassa sovellussalasana, joita luodaan turvallisuus asetuksissa
+     * @param destinationToken String kohdejärjestelmän sovellussalasana, vain toinen tarvitaan
+     * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
+     */
+    public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
         StringBuilder komento = new StringBuilder(RCLONE);
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
             komento.append("copyurl ");
             komento.append(source.polku);
         } else {
              komento.append("copy ");
+             komento.append(Const.cname.get(source.palvelu));
+             komento.append(KAKSOISPISTE);
+             komento.append(source.omistaja);
+             if (IDASTAGING == source.palvelu)
+                 komento.append(PLUS);
+             komento.append(source.polku);
         }
+        komento.append(VÄLILYÖNTI);
+        komento.append(Const.cname.get(destination.palvelu));
+        komento.append(KAKSOISPISTE);
+        komento.append(destination.omistaja);
+        if (IDASTAGING == destination.palvelu) {
+            komento.append(PLUS);
+        }
+        komento.append(source.polku);
+        komento.append(VÄLILYÖNTI);
+        // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
+        komento.append(komentoon(sourceToken, source.username));
+        komento.append(komentoon(destinationToken,destination.username));
+        komento.append(VÄLILYÖNTI);
+        // ei toimine, jos sekä source että destination s3
+        komento.append(s3auth(source.access_key_id, source.secret_access_key));
+        komento.append(s3auth(destination.access_key_id, destination.secret_access_key));
+        return realRun(komento.toString());
+    }
 
+    /**
+     * Lisää --webdav-pass ja --webdav-user optiot komentoriviin
+     *
+     * @param token String Idan sovellussalasana
+     * @param username String Idan käyttäjätunnus
+     * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
+     */
+    private String komentoon(String token, String username) {
+        if ((null != token) && (null != username)) {
+            StringBuilder webdav = new StringBuilder("--webdav-pass ");
+            webdav.append(token);
+            webdav.append(VÄLILYÖNTI);
+            webdav.append("--webdav-user ");
+            webdav.append(username);
+            return webdav.toString();
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Lisää --s3-access-key-id ja --s3-secret-access-key optiot komentoriviin
+     *
+     * @param access_key_id String Altaan salaisuuksia
+     * @param secret_access_key String Altaan salaisuuksia
+     * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
+     */
+    private String s3auth(String access_key_id, String secret_access_key) {
+        if ((null != access_key_id) && (null != secret_access_key)) {
+            StringBuilder s3 = new StringBuilder("--s3-access-key-id ");
+            s3.append(access_key_id);
+            s3.append(VÄLILYÖNTI);
+            s3.append("--s3-secret-access-key ");
+            s3.append(secret_access_key);
+            return s3.toString();
+        } else {
+            return "";
+        }
     }
 
     private static class StreamGobbler implements Runnable {

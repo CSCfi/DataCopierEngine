@@ -47,11 +47,16 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     String sourceToken = obscure(rs.getString(9), rr);
                     String destinationToken = obscure(rs.getString(19), rr);
                     log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
-                    String access_key_id = rs.getString(6);
-                    String secret_access_key = rs.getString(7);
-                    source.access_key_id = (null != access_key_id) ? access_key_id : rs.getString(16);
-                    source.secret_access_key =  (null != secret_access_key) ? secret_access_key : rs.getString(17);
+                    source.access_key_id = rs.getString(6);
+                    source.secret_access_key = rs.getString(7);
+                    destination.access_key_id = rs.getString(16);
+                    destination.secret_access_key = rs.getString(17);
+                    source.omistaja = rs.getString(3);
+                    destination.omistaja = rs.getString(13);
                     source.polku = rs.getString(4);
+                    destination.polku = rs.getString(14);
+                    source.username = rs.getString(5);
+                    destination.username  = rs.getString(15);
                     rr.copy(source, destination, sourceToken, destinationToken);
 
                 }

@@ -1,10 +1,15 @@
 package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
+import io.netty.handler.codec.base64.Base64Encoder;
+import org.jboss.logging.Logger;
 
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
+import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,6 +27,7 @@ public class RcloneRun {
     static final String VÄLILYÖNTI = " ";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
+    static final String LAINAUSMERKKI ="\"";
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -89,7 +95,10 @@ public class RcloneRun {
 
             RcloneRun.StreamGobbler streamGobbler =
                     new RcloneRun.StreamGobbler(process.getInputStream(), System.out::println);
-            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            RcloneRun.StreamGobbler errorStreamGobbler =
+                    new RcloneRun.StreamGobbler(process.getErrorStream(), System.err::println);
+            Executors.newSingleThreadExecutor().submit(errorStreamGobbler);
+
             int exitCode = process.waitFor();
             assert exitCode == 0;
             return exitCode;
@@ -131,7 +140,7 @@ public class RcloneRun {
         if (IDASTAGING == destination.palvelu) {
             komento.append(PLUS);
         }
-        komento.append(source.polku);
+        komento.append(destination.polku);
         komento.append(VÄLILYÖNTI);
         // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
         komento.append(komentoon(sourceToken, source.username));
@@ -140,6 +149,7 @@ public class RcloneRun {
         // ei toimine, jos sekä source että destination s3
         komento.append(s3auth(source.access_key_id, source.secret_access_key));
         komento.append(s3auth(destination.access_key_id, destination.secret_access_key));
+        System.out.println(komento.toString());
         return realRun(komento.toString());
     }
 
@@ -152,11 +162,16 @@ public class RcloneRun {
      */
     private String komentoon(String token, String username) {
         if ((null != token) && (null != username)) {
-            StringBuilder webdav = new StringBuilder("--webdav-pass ");
-            webdav.append(token);
+            StringBuilder webdav = new StringBuilder("--webdav-headers ");
+            webdav.append(LAINAUSMERKKI);
+            webdav.append("Authorization");
+            webdav.append(LAINAUSMERKKI);
+            webdav.append(",");
+             webdav.append(LAINAUSMERKKI);
+            webdav.append("Basic ");
+            webdav.append(Base64.getEncoder().encodeToString((username+":"+token).getBytes(StandardCharsets.UTF_8)));
+             webdav.append(LAINAUSMERKKI);
             webdav.append(VÄLILYÖNTI);
-            webdav.append("--webdav-user ");
-            webdav.append(username);
             return webdav.toString();
         } else {
             return "";

@@ -44,19 +44,19 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     RcloneRun rr = new RcloneRun();
                     rr.config(source);
                     rr.config(destination);
-                    String sourceToken = obscure(rs.getString(9), rr);
-                    String destinationToken = obscure(rs.getString(19), rr);
+                    String sourceToken = rs.getString(9);
+                    String destinationToken = rs.getString(18);
                     log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
                     source.access_key_id = rs.getString(6);
                     source.secret_access_key = rs.getString(7);
-                    destination.access_key_id = rs.getString(16);
-                    destination.secret_access_key = rs.getString(17);
+                    destination.access_key_id = rs.getString(15);
+                    destination.secret_access_key = rs.getString(16);
                     source.omistaja = rs.getString(3);
-                    destination.omistaja = rs.getString(13);
+                    destination.omistaja = rs.getString(12);
                     source.polku = rs.getString(4);
-                    destination.polku = rs.getString(14);
+                    destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
-                    destination.username  = rs.getString(15);
+                    destination.username  = rs.getString(14);
                     rr.copy(source, destination, sourceToken, destinationToken);
 
                 }
@@ -72,6 +72,15 @@ public class ApplicationLifecycle implements QuarkusApplication {
         return 0;
     }
 
+    /**
+     * Poistettu käytöstöstä, koska ei toimi. Minulla on toimiviakin tokeneita,
+     * joten lakkasiko jossain versiossa toimimasta. Oire toimimattomuudesta on, että
+     * jokainen ajo tuottaa eri tuloksen: toimiva on tietysti pysyvä.
+     *
+     * @param token String selväkielinen Idan token
+     * @param rr RcloneRun ajetaan obscure komento
+     * @return String lievästi salattu token --webdav-pass optiolle
+     */
     private String obscure(String token, RcloneRun rr) {
         if (null == token) return null;
         else {

@@ -22,7 +22,7 @@ import static fi.csc.data.model.RcloneConfig.THES3END;
 
 public class RcloneRun {
 
-    static final String RCLONE = "/work/rclone "; //kontissa, muista synckronoida dockerfilen kanssa
+    static final String RCLONE = "/work/rclone"; //kontissa, muista synckronoida dockerfilen kanssa
     static final String CREATE = "config create ";
     static final String VÄLILYÖNTI = " ";
     static final String KAKSOISPISTE = ":";
@@ -37,28 +37,23 @@ public class RcloneRun {
      */
     public int config(RcloneConfig rc) {
 
-        StringBuilder komento = new StringBuilder(RCLONE);
-        komento.append(CREATE);
-        komento.append(Const.cname.get(rc.palvelu));
-        komento.append(VÄLILYÖNTI);
-        komento.append(rc.type); //webdav or s3
-        komento.append(VÄLILYÖNTI);
+        String[] komento = new String[7];
+        komento[0] =RCLONE;
+        komento[1] = "config";
+        komento[2] = "create";
+        komento[3] = (String)Const.cname.get(rc.palvelu);
+        komento[4] = String.valueOf(rc.type); //webdav or s3
         if (rc.palvelu < 3) { //ida This is secure because all is the constants of this program
-            komento.append("vendor=");
-            komento.append(rc.vendor);
-            komento.append(VÄLILYÖNTI);
-            komento.append("url=");
-            komento.append(rc.url);
+            komento[5] = "vendor=" + rc.vendor;
+            komento[6] = "url=" + rc.url;
         } else  if (!rc.open){ //allas
             if (!rc.env_auth)
-               komento.append("env_auth=false");
+               komento[5] = "env_auth=false";
             else
-                komento.append("env_auth=true");
-            komento.append(VÄLILYÖNTI);
-            komento.append(THES3END);
+                komento[5] = "env_auth=true";
+            komento[6] = THES3END;
         }
-
-        return realRun(komento.toString());
+        return realRun(komento);
     }
 
     /**
@@ -89,7 +84,7 @@ public class RcloneRun {
      * @param komento String koko komentorivi, joka suoritetetaan
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
-    private int realRun(String komento) {
+    private int realRun(String[] komento) {
         try {
             Process process = Runtime.getRuntime().exec(komento);
 
@@ -120,48 +115,55 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        StringBuilder komento = new StringBuilder(RCLONE);
+        String[] komento = new String[6];
+                komento[0] = RCLONE;
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
-            komento.append("copyurl ");
-            komento.append(source.polku);
+            komento[1] = "copyurl";
+            komento[2] = source.polku;
         } else {
-             komento.append("copy ");
-             komento.append(Const.cname.get(source.palvelu));
-             komento.append(KAKSOISPISTE);
-             komento.append(source.omistaja);
+             komento[1] = "copy";
+             komento[2] = Const.cname.get(source.palvelu) +
+             KAKSOISPISTE +
+             source.omistaja;
              if (IDASTAGING == source.palvelu)
-                 komento.append(PLUS);
-             komento.append(source.polku);
+                 komento[2] = komento[2] + PLUS;
+             komento[2] = komento[2] + source.polku;
         }
-        komento.append(VÄLILYÖNTI);
-        komento.append(Const.cname.get(destination.palvelu));
-        komento.append(KAKSOISPISTE);
-        komento.append(destination.omistaja);
+
+        komento[3] = Const.cname.get(destination.palvelu) +
+        KAKSOISPISTE +
+        destination.omistaja;
         if (IDASTAGING == destination.palvelu) {
-            komento.append(PLUS);
+            komento[3] = komento[3] + PLUS;
         }
-        komento.append(destination.polku);
-        komento.append(VÄLILYÖNTI);
+        komento[3] = komento[3] + destination.polku;
         // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
-        komento.append(komentoon(sourceToken, source.username));
-        komento.append(komentoon(destinationToken,destination.username));
-        komento.append(VÄLILYÖNTI);
+       if ((null != sourceToken) && (null != source.username)) {
+           komento[4] = komentoon(sourceToken, source.username);
+       }
+       if ((null != destinationToken) && (null != destination.username)) {
+           komento[4] = komentoon(destinationToken,destination.username);
+       }
         // ei toimine, jos sekä source että destination s3
-        komento.append(s3auth(source.access_key_id, source.secret_access_key));
-        komento.append(s3auth(destination.access_key_id, destination.secret_access_key));
-        System.out.println(komento.toString());
-        return realRun(komento.toString());
+        if ((null != source.access_key_id) && (null != source.secret_access_key)) {
+            komento[5] = s3auth(source.access_key_id, source.secret_access_key);
+        }
+        if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
+            komento[5] = s3auth(destination.access_key_id, destination.secret_access_key);
+        }
+        //System.out.println(komento.toString());
+        return realRun(komento);
     }
 
     /**
-     * Lisää --webdav-pass ja --webdav-user optiot komentoriviin
+     * Lisää --webdav-pass ja --webdav-user optiot komentoon
      *
      * @param token String Idan sovellussalasana
      * @param username String Idan käyttäjätunnus
      * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
      */
     private String komentoon(String token, String username) {
-        if ((null != token) && (null != username)) {
+
             StringBuilder webdav = new StringBuilder("--webdav-headers ");
             webdav.append(LAINAUSMERKKI);
             webdav.append("Authorization");
@@ -173,9 +175,7 @@ public class RcloneRun {
              webdav.append(LAINAUSMERKKI);
             webdav.append(VÄLILYÖNTI);
             return webdav.toString();
-        } else {
-            return "";
-        }
+
     }
 
     /**
@@ -186,16 +186,12 @@ public class RcloneRun {
      * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
      */
     private String s3auth(String access_key_id, String secret_access_key) {
-        if ((null != access_key_id) && (null != secret_access_key)) {
             StringBuilder s3 = new StringBuilder("--s3-access-key-id ");
             s3.append(access_key_id);
             s3.append(VÄLILYÖNTI);
             s3.append("--s3-secret-access-key ");
             s3.append(secret_access_key);
             return s3.toString();
-        } else {
-            return "";
-        }
     }
 
     private static class StreamGobbler implements Runnable {

@@ -123,7 +123,7 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        String[] komento = new String[8];
+        String[] komento = new String[11];
                 komento[0] = RCLONE;
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
             komento[1] = "copyurl";
@@ -145,13 +145,17 @@ public class RcloneRun {
             komento[3] = komento[3] + PLUS;
         }
         komento[3] = komento[3] + destination.polku;
-        komento[4] = "--webdav-user";
+        komento[4] = "--webdav-headers";
         // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
        if ((null != sourceToken) && (null != source.username)) {
-           komento[5] = source.username;
+           komento[5] = "Authorization,Basic "+new String(Base64.getEncoder().
+                   encode((source.username+":"+sourceToken).
+                           getBytes(StandardCharsets.ISO_8859_1)));
        }
        if ((null != destinationToken) && (null != destination.username)) {
-           komento[5] = destination.username;
+           komento[5] = "Authorization," + LAINAUSMERKKI +"Basic "+new String(Base64.getEncoder().
+                   encode((destination.username+":"+destinationToken).
+                           getBytes(StandardCharsets.ISO_8859_1)))+LAINAUSMERKKI;
        }
        komento[6] = "--s3-secret-access-key";
         // ei toimine, jos sekä source että destination s3
@@ -161,39 +165,11 @@ public class RcloneRun {
         if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
             komento[7] = destination.secret_access_key;
         }
+        komento[8] = "-vv";
+        komento[9] = "--dump";
+        komento[10] =   "auth";
         //System.out.println(komento.toString());
         return realRun(komento);
-    }
-
-    /**
-     * Lisää --webdav-pass ja --webdav-user optiot komentoon
-     *
-     * @param token String Idan sovellussalasana
-     * @param username String Idan käyttäjätunnus
-     * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
-     */
-    private String komentoon(String token, String username) {
-
-            StringBuilder webdav = new StringBuilder("--webdav-user ");
-            webdav.append(username);
-            return webdav.toString();
-
-    }
-
-    /**
-     * Lisää --s3-access-key-id ja --s3-secret-access-key optiot komentoriviin
-     *
-     * @param access_key_id String Altaan salaisuuksia
-     * @param secret_access_key String Altaan salaisuuksia
-     * @return String pätkä komentoriviä tai tyhjä merkkijono, jos jompikumpi parametri puuttui
-     */
-    private String s3auth(String access_key_id, String secret_access_key) {
-            StringBuilder s3 = new StringBuilder("--s3-access-key-id ");
-            s3.append(access_key_id);
-            s3.append(VÄLILYÖNTI);
-            s3.append("--s3-secret-access-key ");
-            s3.append(secret_access_key);
-            return s3.toString();
     }
 
     private static class StreamGobbler implements Runnable {

@@ -42,14 +42,20 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
                     log.info("Source: " + source.type + " Destination: " + destination.type);
                     RcloneRun rr = new RcloneRun();
-                    rr.config(source);
-                    rr.config(destination);
                     String sourceToken = rs.getString(9);
                     String destinationToken = rs.getString(18);
-                    log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
                     source.access_key_id = rs.getString(6);
-                    source.secret_access_key = rs.getString(7);
                     destination.access_key_id = rs.getString(15);
+                    if (null == sourceToken) {
+                        sourceToken = source.access_key_id;
+                    }
+                    rr.config(source, sourceToken);
+                    if (null == destinationToken) {
+                        destinationToken = destination.access_key_id;
+                    }
+                    rr.config(destination, destinationToken);
+                    log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
+                    source.secret_access_key = rs.getString(7);
                     destination.secret_access_key = rs.getString(16);
                     source.omistaja = rs.getString(3);
                     destination.omistaja = rs.getString(12);

@@ -35,9 +35,9 @@ public class RcloneRun {
      * @param rc RcloneConfig source or destination
      * @return int status 0 is success
      */
-    public int config(RcloneConfig rc) {
+    public int config(RcloneConfig rc, String token) {
 
-        String[] komento = new String[7];
+        String[] komento = new String[8];
         komento[0] =RCLONE;
         komento[1] = "config";
         komento[2] = "create";
@@ -46,12 +46,14 @@ public class RcloneRun {
         if (rc.palvelu < 3) { //ida This is secure because all is the constants of this program
             komento[5] = "vendor=" + rc.vendor;
             komento[6] = "url=" + rc.url;
+            komento[7] = "pass=" + token;
         } else  if (!rc.open){ //allas
             if (!rc.env_auth)
                komento[5] = "env_auth=false";
             else
                 komento[5] = "env_auth=true";
-            komento[6] = THES3END;
+            komento[6] = "access_key_id=" + token;
+            komento[7] = THES3END;
         }
         return realRun(komento);
     }
@@ -85,6 +87,12 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     private int realRun(String[] komento) {
+        for (int i = 0; i < komento.length; i++) {
+            if (null == komento[i]) {
+                System.err.println(i + "was null");
+                return -5;
+            }
+        }
         try {
             Process process = Runtime.getRuntime().exec(komento);
 
@@ -115,7 +123,7 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        String[] komento = new String[6];
+        String[] komento = new String[8];
                 komento[0] = RCLONE;
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
             komento[1] = "copyurl";
@@ -137,19 +145,21 @@ public class RcloneRun {
             komento[3] = komento[3] + PLUS;
         }
         komento[3] = komento[3] + destination.polku;
+        komento[4] = "--webdav-user";
         // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
        if ((null != sourceToken) && (null != source.username)) {
-           komento[4] = komentoon(sourceToken, source.username);
+           komento[5] = source.username;
        }
        if ((null != destinationToken) && (null != destination.username)) {
-           komento[4] = komentoon(destinationToken,destination.username);
+           komento[5] = destination.username;
        }
+       komento[6] = "--s3-secret-access-key";
         // ei toimine, jos sekä source että destination s3
         if ((null != source.access_key_id) && (null != source.secret_access_key)) {
-            komento[5] = s3auth(source.access_key_id, source.secret_access_key);
+            komento[7] = source.secret_access_key;
         }
         if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
-            komento[5] = s3auth(destination.access_key_id, destination.secret_access_key);
+            komento[7] = destination.secret_access_key;
         }
         //System.out.println(komento.toString());
         return realRun(komento);
@@ -164,16 +174,8 @@ public class RcloneRun {
      */
     private String komentoon(String token, String username) {
 
-            StringBuilder webdav = new StringBuilder("--webdav-headers ");
-            webdav.append(LAINAUSMERKKI);
-            webdav.append("Authorization");
-            webdav.append(LAINAUSMERKKI);
-            webdav.append(",");
-             webdav.append(LAINAUSMERKKI);
-            webdav.append("Basic ");
-            webdav.append(Base64.getEncoder().encodeToString((username+":"+token).getBytes(StandardCharsets.UTF_8)));
-             webdav.append(LAINAUSMERKKI);
-            webdav.append(VÄLILYÖNTI);
+            StringBuilder webdav = new StringBuilder("--webdav-user ");
+            webdav.append(username);
             return webdav.toString();
 
     }

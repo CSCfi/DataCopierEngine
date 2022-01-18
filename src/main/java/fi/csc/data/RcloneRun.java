@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.io.InputStream;
@@ -24,7 +25,7 @@ import static fi.csc.data.model.RcloneConfig.ASETUKSET;
 public class RcloneRun {
 
     static final String RCLONE = "/work/rclone"; //kontissa, muista synckronoida dockerfilen kanssa
-    static final String CREATE = "config create ";
+    //static final String CREATE = "config create ";
     static final String VÄLILYÖNTI = " ";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
@@ -38,27 +39,27 @@ public class RcloneRun {
      */
     public int config(RcloneConfig rc, String token) {
 
-        String[] komento = new String[10];
-        komento[0] =RCLONE;
-        komento[1] = "config";
-        komento[2] = "create";
-        komento[3] = (String)Const.cname.get(rc.palvelu);
-        komento[4] = String.valueOf(rc.type); //webdav or s3
+        ArrayList<String> komento = new ArrayList<String>(7);
+        komento.add(RCLONE);
+        komento.add("config");
+        komento.add("create");
+        komento.add((String)Const.cname.get(rc.palvelu));
+        komento.add(String.valueOf(rc.type)); //webdav or s3
         if (rc.palvelu < 3) { //ida This is secure because all is the constants of this program
-            komento[5] = "vendor=" + rc.vendor;
-            komento[6] = "url=" + rc.url;
-            komento[7] = "pass=" + token;
+            komento.add("vendor=" + rc.vendor);
+            komento.add("url=" + rc.url);
+            komento.add("pass=" + token);
         } else  if (!rc.open){ //allas
             if (!rc.env_auth)
-               komento[5] = "env_auth=false";
+               komento.add("env_auth=false");
             else
-                komento[5] = "env_auth=true";
-            komento[6] = "access_key_id=" + token;
-            komento[7] = ASETUKSET[0];
-            komento[8] = ASETUKSET[1];
-            komento[9] = ASETUKSET[2];
+                komento.add("env_auth=true");
+            komento.add("access_key_id=" + token);
+            komento.add(ASETUKSET[0]);
+            komento.add(ASETUKSET[1]);
+            komento.add(ASETUKSET[2]);
         }
-        return realRun(komento);
+        return realRun(komento.toArray(new String[komento.size()]));
     }
 
     /**

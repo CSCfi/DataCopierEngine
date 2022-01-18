@@ -1,6 +1,7 @@
 package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
+import fi.csc.data.model.Status;
 import io.netty.handler.codec.base64.Base64Encoder;
 import org.jboss.logging.Logger;
 
@@ -30,6 +31,37 @@ public class RcloneRun {
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
     static final String LAINAUSMERKKI ="\"";
+    static final String AIKA = "Elapsed time:";
+    static final String MB  = "Transferred:";
+    static final String KAIKKI = "100%";
+    static final double KILO = 1000;
+
+    /**
+     *   Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
+Transferred:            1 / 1, 100%
+Elapsed time:         1.3s
+
+     */
+    Consumer<String> kaiva = s -> {
+       if (s.contains(AIKA)) {
+           String ss = s.substring(AIKA.length()+1,s.lastIndexOf("s")).trim();
+           double kesto = Double.parseDouble(ss);
+           System.out.println("Kesto: "+ kesto);
+       } else if (s.contains(MB) && s.contains(KAIKKI)) {
+           String ss = s.substring(MB.length()+1,s.lastIndexOf(KAIKKI));
+           String[] identtiset = ss.split("/");
+           String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
+           double luku = Double.parseDouble(lukuyksikkö[0].trim());
+           if (lukuyksikkö[1].contains("KiB"))
+               luku = luku/KILO;
+           else if (lukuyksikkö[1].contains("GiB"))
+               luku = luku*KILO;
+           else if (lukuyksikkö[1].contains("TiB"))
+               luku = luku*KILO*KILO;
+            System.out.println("Megatavut: " + luku);
+        }
+
+    };
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -37,7 +69,7 @@ public class RcloneRun {
      * @param rc RcloneConfig source or destination
      * @return int status 0 is success
      */
-    public int config(RcloneConfig rc, String token) {
+    public Status config(RcloneConfig rc, String token) {
 
         ArrayList<String> komento = new ArrayList<String>(7);
         komento.add(RCLONE);
@@ -87,34 +119,34 @@ public class RcloneRun {
     /**
      * Sekä konfikuraatio että varsinainen rclone komennon suoritus
      *
-     * @param komento String koko komentorivi, joka suoritetetaan
-     * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
+     * @param komento String[] komento ja kaikki optiot, koko komeus suoritetetaan
+     * @return Status, jossa int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
-    private int realRun(String[] komento) {
-        for (int i = 0; i < komento.length; i++) {
+    private Status realRun(String[] komento) {
+        for (int i = 0; i < komento.length; i++) { // vain debuggaus: voi optimoida pois!
             if (null == komento[i]) {
                 System.err.println(i + " was null after " + komento[i-1]);
-                return -5;
+                return new Status(-5);
             }
         }
         try {
             Process process = Runtime.getRuntime().exec(komento);
 
             RcloneRun.StreamGobbler streamGobbler =
-                    new RcloneRun.StreamGobbler(process.getInputStream(), System.out::println);
+                    new RcloneRun.StreamGobbler(process.getInputStream(), kaiva);
             RcloneRun.StreamGobbler errorStreamGobbler =
                     new RcloneRun.StreamGobbler(process.getErrorStream(), System.err::println);
-            Executors.newSingleThreadExecutor().submit(errorStreamGobbler);
+            Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
             assert exitCode == 0;
-            return exitCode;
+            return  new Status(exitCode);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return -2;
+        return new Status(-2);
     }
 
     /**
@@ -126,9 +158,9 @@ public class RcloneRun {
      * @param destinationToken String kohdejärjestelmän sovellussalasana, vain toinen tarvitaan
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
-    public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        String[] komento = new String[8];
-                komento[0] = RCLONE;
+    public Status copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
+        String[] komento = new String[9];
+        komento[0] = RCLONE;
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
             komento[1] = "copyurl";
             komento[2] = source.polku;
@@ -169,6 +201,7 @@ public class RcloneRun {
         if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
             komento[7] = destination.secret_access_key;
         }
+        komento[8] = "-P";
         /*komento[8] = "-vv";
         komento[9] = "--dump";
         komento[10] =   "auth";*/

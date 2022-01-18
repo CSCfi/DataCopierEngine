@@ -1,6 +1,7 @@
 package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
+import fi.csc.data.model.Status;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import org.jboss.logging.Logger;
@@ -63,7 +64,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
                     destination.username  = rs.getString(14);
-                    rr.copy(source, destination, sourceToken, destinationToken);
+                    Status s = rr.copy(source, destination, sourceToken, destinationToken);
 
                 }
                 Statement stmt = rs.getStatement();

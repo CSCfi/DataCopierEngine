@@ -3,6 +3,7 @@ package fi.csc.data.model;
 public class RcloneConfig {
 
     public final static String THES3END = "provider=Other endpoint=a3s.fi acl=private";
+    public final static String[] ASETUKSET = THES3END.split(" ");
     public enum Type {swift, s3, webdav}
     public enum Vendor { nextcloud }
 
@@ -35,4 +36,8 @@ public class RcloneConfig {
          this.env_auth = env_auth;
          this.open  = open;
     }
+
+    /*static {
+
+    }*/
 }

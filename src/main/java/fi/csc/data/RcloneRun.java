@@ -17,7 +17,8 @@ import java.util.function.Consumer;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
-import static fi.csc.data.model.RcloneConfig.THES3END;
+import static fi.csc.data.model.RcloneConfig.ASETUKSET;
+//import static fi.csc.data.model.RcloneConfig.THES3END;
 
 
 public class RcloneRun {
@@ -37,7 +38,7 @@ public class RcloneRun {
      */
     public int config(RcloneConfig rc, String token) {
 
-        String[] komento = new String[8];
+        String[] komento = new String[10];
         komento[0] =RCLONE;
         komento[1] = "config";
         komento[2] = "create";
@@ -53,7 +54,9 @@ public class RcloneRun {
             else
                 komento[5] = "env_auth=true";
             komento[6] = "access_key_id=" + token;
-            komento[7] = THES3END;
+            komento[7] = ASETUKSET[0];
+            komento[8] = ASETUKSET[1];
+            komento[9] = ASETUKSET[2];
         }
         return realRun(komento);
     }
@@ -89,7 +92,7 @@ public class RcloneRun {
     private int realRun(String[] komento) {
         for (int i = 0; i < komento.length; i++) {
             if (null == komento[i]) {
-                System.err.println(i + "was null");
+                System.err.println(i + " was null after " + komento[i-1]);
                 return -5;
             }
         }
@@ -123,7 +126,7 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     public int copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        String[] komento = new String[11];
+        String[] komento = new String[8];
                 komento[0] = RCLONE;
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
             komento[1] = "copyurl";
@@ -165,9 +168,9 @@ public class RcloneRun {
         if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
             komento[7] = destination.secret_access_key;
         }
-        komento[8] = "-vv";
+        /*komento[8] = "-vv";
         komento[9] = "--dump";
-        komento[10] =   "auth";
+        komento[10] =   "auth";*/
         //System.out.println(komento.toString());
         return realRun(komento);
     }

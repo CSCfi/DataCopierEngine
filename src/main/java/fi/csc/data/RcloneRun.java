@@ -52,13 +52,16 @@ Elapsed time:         1.3s
            String[] identtiset = ss.split("/");
            String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
            double luku = Double.parseDouble(lukuyksikkö[0].trim());
+           int mb;
            if (lukuyksikkö[1].contains("KiB"))
-               luku = luku/KILO;
+               mb = (int)Math. round( luku/KILO );
            else if (lukuyksikkö[1].contains("GiB"))
-               luku = luku*KILO;
+               mb = (int)Math. round(luku*KILO);
            else if (lukuyksikkö[1].contains("TiB"))
-               luku = luku*KILO*KILO;
-            System.out.println("Megatavut: " + luku);
+               mb = (int)Math. round(luku*KILO*KILO);
+           else
+               mb = (int)Math. round(luku);
+            System.out.println("Megatavut: " + mb);
         }
 
     };
@@ -133,7 +136,7 @@ Elapsed time:         1.3s
             Process process = Runtime.getRuntime().exec(komento);
 
             RcloneRun.StreamGobbler streamGobbler =
-                    new RcloneRun.StreamGobbler(process.getInputStream(), kaiva);
+                    new RcloneRun.StreamGobbler(process.getInputStream(), kaiva.andThen(System.out::println));
             RcloneRun.StreamGobbler errorStreamGobbler =
                     new RcloneRun.StreamGobbler(process.getErrorStream(), System.err::println);
             Executors.newSingleThreadExecutor().submit(streamGobbler);

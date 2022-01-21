@@ -33,12 +33,16 @@ public class ApplicationLifecycle implements QuarkusApplication {
             System.out.println("Hello " + args[1]);
         }
         try {
+            Status s = null;
             Connection connection = defaultDataSource.getConnection();
             ResultSet rs = Base.read(connection);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
             } else {
                 if (rs.first()) {
+                    int copyid = rs.getInt(19);
+                    Connection c2 =  defaultDataSource.getConnection();
+                    Base.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
                     log.info("Source: " + source.type + " Destination: " + destination.type);
@@ -64,12 +68,13 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
                     destination.username  = rs.getString(14);
-                    Status s = rr.copy(source, destination, sourceToken, destinationToken);
-
+                    s = rr.copy(source, destination, sourceToken, destinationToken);
+                    Base.write(c2, s, copyid);
                 }
                 Statement stmt = rs.getStatement();
                 rs.close();
                 stmt.close();
+
             }
             connection.close();
         } catch (SQLException throwables) {

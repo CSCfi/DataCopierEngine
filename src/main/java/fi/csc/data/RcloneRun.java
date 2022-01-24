@@ -2,32 +2,31 @@ package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
-import io.netty.handler.codec.base64.Base64Encoder;
-import org.jboss.logging.Logger;
+//import io.netty.handler.codec.base64.Base64Encoder;
+//import org.jboss.logging.Logger;
 
-import javax.inject.Inject;
+//import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import java.util.OptionalDouble;
 import java.util.concurrent.Executors;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
 import static fi.csc.data.model.RcloneConfig.ASETUKSET;
-//import static fi.csc.data.model.RcloneConfig.THES3END;
 
 
 public class RcloneRun {
 
     static final String RCLONE = "/work/rclone"; //kontissa, muista synckronoida dockerfilen kanssa
-    //static final String CREATE = "config create ";
-    static final String VÄLILYÖNTI = " ";
+    //static final String VÄLILYÖNTI = " ";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
     static final String LAINAUSMERKKI ="\"";
@@ -35,36 +34,6 @@ public class RcloneRun {
     static final String MB  = "Transferred:";
     static final String KAIKKI = "100%";
     static final double KILO = 1000;
-
-    /**
-     *   Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
-Transferred:            1 / 1, 100%
-Elapsed time:         1.3s
-
-     */
-    Consumer<String> kaiva = s -> {
-       if (s.contains(AIKA)) {
-           String ss = s.substring(AIKA.length()+1,s.lastIndexOf("s")).trim();
-           double kesto = Double.parseDouble(ss);
-           System.out.println("Kesto: "+ kesto);
-       } else if (s.contains(MB) && s.contains(KAIKKI)) {
-           String ss = s.substring(MB.length()+1,s.lastIndexOf(KAIKKI));
-           String[] identtiset = ss.split("/");
-           String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
-           double luku = Double.parseDouble(lukuyksikkö[0].trim());
-           int mb;
-           if (lukuyksikkö[1].contains("KiB"))
-               mb = (int)Math. round( luku/KILO );
-           else if (lukuyksikkö[1].contains("GiB"))
-               mb = (int)Math. round(luku*KILO);
-           else if (lukuyksikkö[1].contains("TiB"))
-               mb = (int)Math. round(luku*KILO*KILO);
-           else
-               mb = (int)Math. round(luku);
-            System.out.println("Megatavut: " + mb);
-        }
-
-    };
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -136,14 +105,14 @@ Elapsed time:         1.3s
             Process process = Runtime.getRuntime().exec(komento);
 
             RcloneRun.StreamGobbler streamGobbler =
-                    new RcloneRun.StreamGobbler(process.getInputStream(), kaiva.andThen(System.out::println));
+                    new RcloneRun.StreamGobbler(process.getInputStream());
             RcloneRun.StreamGobbler errorStreamGobbler =
-                    new RcloneRun.StreamGobbler(process.getErrorStream(), System.err::println);
+                    new RcloneRun.StreamGobbler(process.getErrorStream());
             Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
             assert exitCode == 0;
-            return  new Status(exitCode);
+            return  new Status(exitCode, streamGobbler.getMB(), streamGobbler.getKesto());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -212,20 +181,62 @@ Elapsed time:         1.3s
         return realRun(komento);
     }
 
-    private static class StreamGobbler implements Runnable {
+    private  class StreamGobbler implements Runnable {
         private InputStream inputStream;
-        private Consumer<String> consumer;
+        List<String> list;
 
-        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+        public StreamGobbler(InputStream inputStream) {
             this.inputStream = inputStream;
-            this.consumer = consumer;
         }
 
         @Override
         public void run() {
-            new BufferedReader(new InputStreamReader(inputStream)).lines()
-                    .forEach(consumer);
+            list = new BufferedReader(new InputStreamReader(inputStream)).lines()
+                    .collect(Collectors.toList());
         }
+
+        /**
+         * Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
+         * Transferred:            1 / 1, 100%
+         * Elapsed time:         1.3s
+         */
+
+        public double getKesto() {
+            OptionalDouble d = list.stream().filter(s -> s.contains(AIKA)).mapToDouble(s -> laskekesto(s)).max();
+            if (d.isPresent())
+                return d.getAsDouble();
+            else
+                return -1.0;
+        }
+
+        private double laskekesto(String s) {
+            String ss = s.substring(AIKA.length() + 1, s.lastIndexOf("s")).trim();
+            return Double.parseDouble(ss);
+        }
+        public int getMB() {
+            return 0;
+            /*list.stream().
+        } else if(s.contains(MB)&&s.contains(KAIKKI))
+
+        {
+            String ss = s.substring(MB.length() + 1, s.lastIndexOf(KAIKKI));
+            String[] identtiset = ss.split("/");
+            String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
+            double luku = Double.parseDouble(lukuyksikkö[0].trim());
+            int mb;
+            if (lukuyksikkö[1].contains("KiB"))
+                mb = (int) Math.round(luku / KILO);
+            else if (lukuyksikkö[1].contains("GiB"))
+                mb = (int) Math.round(luku * KILO);
+            else if (lukuyksikkö[1].contains("TiB"))
+                mb = (int) Math.round(luku * KILO * KILO);
+            else
+                mb = (int) Math.round(luku);
+            System.out.println("Megatavut: " + mb);
+        }*/
+
+        }
+
     }
 
 }

@@ -32,8 +32,7 @@ public class Base {
     static ResultSet read(Connection con) {
         try {
             PreparedStatement statement = con.prepareStatement(SELECT);
-            ResultSet rs = statement.executeQuery();
-            return rs;
+           return statement.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -77,7 +76,7 @@ public class Base {
      */
     public static int start(Connection c2, int copyid) {
          try {
-                PreparedStatement statement = c2.prepareStatement(UPDATE);
+                PreparedStatement statement = c2.prepareStatement(START);
                 statement.setInt(1, 11); // status running
                 statement.setInt(2, copyid);
                 int tulos = statement.executeUpdate();

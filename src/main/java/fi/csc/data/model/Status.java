@@ -8,4 +8,10 @@ public class Status {
     public Status(int exitCode) {
         this.exitCode = exitCode;
     }
+
+    public Status(int exitCode, int mb, double kesto) {
+        this.exitCode = exitCode;
+        this.MB = mb;
+        this.kesto = kesto;
+    }
 }

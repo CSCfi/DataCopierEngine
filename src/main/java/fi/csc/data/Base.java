@@ -53,7 +53,10 @@ public class Base {
                 PreparedStatement statement = c2.prepareStatement(UPDATE);
                 statement.setInt(1, s.exitCode);
                 statement.setInt(2, s.MB );
-                statement.setDouble(3,s.kesto); //wallclock
+                if (s.kesto < 0)
+                    statement.setNull(3, java.sql.Types.NULL);
+                else
+                    statement.setDouble(3,s.kesto); //wallclock
                 statement.setInt(4, copyid);
                 int tulos = statement.executeUpdate();
                 statement.close();

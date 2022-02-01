@@ -59,7 +59,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
                         destinationToken = destination.access_key_id;
                     }
                     rr.config(destination, destinationToken);
-                    log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
+                    //log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
                     source.secret_access_key = rs.getString(7);
                     destination.secret_access_key = rs.getString(16);
                     source.omistaja = rs.getString(3);

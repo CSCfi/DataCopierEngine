@@ -2,27 +2,28 @@ package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.annotations.QuarkusMain;
+import io.quarkus.runtime.annotations.CommandLineArguments;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
-import io.agroal.api.AgroalDataSource;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 
-@QuarkusMain
-public class ApplicationLifecycle implements QuarkusApplication {
+public class Engine implements QuarkusApplication {
 
     @Inject
     Logger log;
 
     @Inject
     AgroalDataSource defaultDataSource;
+
+    @Inject
+    @CommandLineArguments
+    String[] args;
 
     @Override
     public int run(String... args) throws Exception {
@@ -41,7 +42,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
             } else {
                 if (rs.first()) {
                     int copyid = rs.getInt(19);
-                    Connection c2 =  defaultDataSource.getConnection();
+                    Connection c2 = defaultDataSource.getConnection();
                     Base.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
@@ -67,7 +68,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
                     source.polku = rs.getString(4);
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
-                    destination.username  = rs.getString(14);
+                    destination.username = rs.getString(14);
                     s = rr.copy(source, destination, sourceToken, destinationToken);
                     Base.write(c2, s, copyid);
                 }
@@ -90,7 +91,7 @@ public class ApplicationLifecycle implements QuarkusApplication {
      * jokainen ajo tuottaa eri tuloksen: toimiva on tietysti pysyvä.
      *
      * @param token String selväkielinen Idan token
-     * @param rr RcloneRun ajetaan obscure komento
+     * @param rr    RcloneRun ajetaan obscure komento
      * @return String lievästi salattu token --webdav-pass optiolle
      */
     private String obscure(String token, RcloneRun rr) {
@@ -101,3 +102,5 @@ public class ApplicationLifecycle implements QuarkusApplication {
     }
 
 }
+
+

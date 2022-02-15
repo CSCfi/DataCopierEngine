@@ -19,7 +19,7 @@ public class Engine implements QuarkusApplication {
     Logger log;
 
     @Inject
-    AgroalDataSource read; //DataSource
+    AgroalDataSource defaultDataSource;
 
      @Inject
     AgroalDataSource write; //DataSource
@@ -38,7 +38,7 @@ public class Engine implements QuarkusApplication {
         }
         try {
             Status s = null;
-            Connection connection = read.getConnection();
+            Connection connection = defaultDataSource.getConnection();
             ResultSet rs = Base.read(connection);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");

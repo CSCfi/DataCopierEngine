@@ -19,7 +19,10 @@ public class Engine implements QuarkusApplication {
     Logger log;
 
     @Inject
-    AgroalDataSource defaultDataSource;
+    AgroalDataSource read; //DataSource
+
+     @Inject
+    AgroalDataSource write; //DataSource
 
     @Inject
     @CommandLineArguments
@@ -35,14 +38,14 @@ public class Engine implements QuarkusApplication {
         }
         try {
             Status s = null;
-            Connection connection = defaultDataSource.getConnection();
+            Connection connection = read.getConnection();
             ResultSet rs = Base.read(connection);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
             } else {
                 if (rs.first()) {
                     int copyid = rs.getInt(19);
-                    Connection c2 = defaultDataSource.getConnection();
+                    Connection c2 = write.getConnection();
                     Base.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));

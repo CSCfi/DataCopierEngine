@@ -26,7 +26,6 @@ import static fi.csc.data.model.RcloneConfig.ASETUKSET;
 public class RcloneRun {
 
     static final String RCLONE = "/work/rclone"; //kontissa, muista synckronoida dockerfilen kanssa
-    //static final String VÄLILYÖNTI = " ";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
     static final String LAINAUSMERKKI ="\"";

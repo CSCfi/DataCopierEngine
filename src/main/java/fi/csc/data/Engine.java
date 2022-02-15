@@ -70,6 +70,7 @@ public class Engine implements QuarkusApplication {
                     source.username = rs.getString(5);
                     destination.username = rs.getString(14);
                     s = rr.copy(source, destination, sourceToken, destinationToken);
+                    log.info("Kesto: "+s.kesto);
                     Base.write(c2, s, copyid);
                 }
                 Statement stmt = rs.getStatement();

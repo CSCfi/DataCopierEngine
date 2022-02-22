@@ -31,8 +31,8 @@ public class Base {
      */
     static ResultSet read(Connection con) {
         try {
-            PreparedStatement statement = con.prepareStatement(SELECT);
-           return statement.executeQuery();
+            PreparedStatement stmnt = con.prepareStatement(SELECT);
+           return stmnt.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

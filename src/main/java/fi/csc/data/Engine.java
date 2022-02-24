@@ -38,14 +38,14 @@ public class Engine implements QuarkusApplication {
         }
         try {
             Status s = null;
-	    Connection c2 = write.getConnection();
+	        Connection c2 = write.getConnection();
             Connection connection = defaultDataSource.getConnection();
             ResultSet rs = Base.read(connection);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
             } else {
                 if (rs.first()) {
-                    int copyid = rs.getInt(19);                    
+                    int copyid = rs.getInt(19);
                     Base.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));

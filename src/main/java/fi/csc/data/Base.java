@@ -20,7 +20,7 @@ public class Base {
             "WHERE r.source = source.caseid AND r.destination = destination.caseid AND " +
             "source.Auth = auths.authid AND destination.Auth = ad.authid and r.status IS NULL";
 
-    final static String UPDATE = "UPDATE request set status=?, MB=?, wallclock=? WHERE copyid=?";
+    final static String UPDATE = "UPDATE request set status=?, MB=?, wallclock=?, nofiles=? WHERE copyid=?";
     final static String START  = "UPDATE request set status=? WHERE copyid=?";
 
     /**
@@ -57,7 +57,11 @@ public class Base {
                     statement.setNull(3, java.sql.Types.NULL);
                 else
                     statement.setDouble(3,s.kesto); //wallclock
-                statement.setInt(4, copyid);
+                if (-1 != s.files)
+                    statement.setInt(4, s.files);
+                else
+                    statement.setNull(4, java.sql.Types.NULL);
+                statement.setInt(5, copyid);
                 int tulos = statement.executeUpdate();
                 statement.close();
                 c2.close();

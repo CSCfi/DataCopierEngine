@@ -18,8 +18,8 @@ public class Const {
     public static final int ALLASPUBLIC = 6;
     public static final int B2DROP = 7;
 
-
-    static final String IDAURL = "https://ida.fairdata.fi/remote.php/webdav";
+    static final String WEBDAV = "remote.php/webdav";
+    static final String IDAURL = "https://ida.fairdata.fi/"+WEBDAV;
     static final String IDAS = "ida";
     static final String ALLASS = "allas";
     static final String ALLASURL = "a3s.fi";
@@ -32,10 +32,13 @@ public class Const {
         palveluht.put(IDASTAGING, new RcloneConfig(2, webdav, nextcloud, IDAURL, true));
         palveluht.put(ALLAS, new RcloneConfig(5, s3, false, false));
         palveluht.put(ALLASPUBLIC, new RcloneConfig(6, s3, false, true));
+        palveluht.put(B2DROP, new RcloneConfig(7,  webdav, nextcloud,
+                "https://b2drop.eudat.eu/"+WEBDAV, false));
 
         cname.put(IDA, IDAS);
         cname.put(IDASTAGING, IDAS);
         cname.put(ALLAS, ALLASS);
         cname.put(ALLASPUBLIC, ALLASS);
+        cname.put(B2DROP, "b2drop");
     }
 }

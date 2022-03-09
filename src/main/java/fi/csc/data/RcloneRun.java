@@ -6,6 +6,7 @@ import fi.csc.data.model.Status;
 //import org.jboss.logging.Logger;
 
 //import javax.inject.Inject;
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,10 +14,12 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.concurrent.Executors;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
+import org.jboss.logging.Logger;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
@@ -29,10 +32,15 @@ public class RcloneRun {
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
     static final String LAINAUSMERKKI ="\"";
+    static final String KAUTTA = "/";
+    static final String VÄLILYÖNTI = " ";
     static final String AIKA = "Elapsed time:";
     static final String MB  = "Transferred:";
     static final String KAIKKI = "100%";
     static final double KILO = 1000;
+
+    @Inject
+    Logger log;
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -48,7 +56,7 @@ public class RcloneRun {
         komento.add("create");
         komento.add((String)Const.cname.get(rc.palvelu));
         komento.add(String.valueOf(rc.type)); //webdav or s3
-        if (rc.palvelu < 3) { //ida This is secure because all is the constants of this program
+        if (rc.palvelu < 3 || rc.palvelu > 6) { //ida || b2dropThis is secure because all is the constants of this program
             komento.add("vendor=" + rc.vendor);
             komento.add("url=" + rc.url);
             komento.add("pass=" + token);
@@ -111,7 +119,9 @@ public class RcloneRun {
 
             int exitCode = process.waitFor();
             assert exitCode == 0;
-            return  new Status(exitCode, streamGobbler.getMB(), streamGobbler.getKesto());
+            return  new Status(exitCode, streamGobbler.getMB(),
+                                streamGobbler.getKesto(),
+                                streamGobbler.getNOFiles());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -183,6 +193,8 @@ public class RcloneRun {
     private  class StreamGobbler implements Runnable {
         private InputStream inputStream;
         List<String> list;
+        Double megatavut;
+        int tiedostojenlukumäärä = -1;
 
         public StreamGobbler(InputStream inputStream) {
             this.inputStream = inputStream;
@@ -208,34 +220,94 @@ public class RcloneRun {
                 return -1.0;
         }
 
+        /**
+         * Tolkkua pitäisi saada  myös "1.1sTransferred:   	          0 B / 13.594 MiB, 0%, 0 B/"
+         * Koska sisältää myös MB yritään tuottaa sivuvaikutus
+         *
+         * @param s String sisältää käytetyn ajan ja ehkä siirretyt tavut
+         * @return double seinäkelloaika sekuntteina
+         */
         private double laskekesto(String s) {
-            String ss = s.substring(AIKA.length() + 1, s.lastIndexOf("s")).trim();
+            String ss = "-3.0"; //vain error koodi
+            if (s.contains(MB)) { //"Transferred:"
+                ss = s.substring(AIKA.length() + 1, s.indexOf(MB) -1).trim();
+                //tämä ylimääräistä! Ei aikaa vaan MB
+                String mb = s.substring(s.indexOf(MB) + MB.length());
+                String[] identtiset = mb.split(KAUTTA);
+                String[] lukuyksikkö = identtiset[1].trim().split(VÄLILYÖNTI);
+                megatavut = Double.parseDouble(lukuyksikkö[0]);
+            } else {
+                ss = s.substring(AIKA.length() + 1, s.lastIndexOf("s")).trim();
+            }
             return Double.parseDouble(ss);
         }
-        public int getMB() {
-            return 0;
-            /*list.stream().
-        } else if(s.contains(MB)&&s.contains(KAIKKI))
 
-        {
+
+        public int getMB() {
+            if (null != megatavut)
+                return (int) Math.round(megatavut);
+            else {
+                OptionalInt d = list.stream()
+                        .filter(s -> s.contains(MB) && s.contains(KAIKKI))
+                        .mapToInt(s -> laskeMB(s)).max();
+                if (d.isPresent())
+                    return d.getAsInt();
+                else
+                 return 0;
+            }
+        }
+
+
+        /**
+         * Yrittää parsia siirretyt MB.
+         *
+         * @param s String like Lasketaan MB: *                                  DSC08601.JPG:100% /14.344Mi, 14.331Mi/s, 0sTransferred:   	   14.344 MiB / 14.344 MiB, 100%, 11.831 MiB/s,
+         * @return int MB
+         */
+         private int laskeMB(String s) {
+            System.out.println("Lasketaan MB:"+ s);
             String ss = s.substring(MB.length() + 1, s.lastIndexOf(KAIKKI));
-            String[] identtiset = ss.split("/");
-            String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
-            double luku = Double.parseDouble(lukuyksikkö[0].trim());
+            String[] identtiset = ss.split(KAUTTA);
+            if (identtiset.length > 2) {
+                String[] lukuyksikkö = identtiset[2].split(VÄLILYÖNTI);
+                if (lukuyksikkö.length > 8) {
+                    double luku = Double.parseDouble(lukuyksikkö[7].trim());
+                    return toMB(luku, lukuyksikkö[8]); //Tämä on oikea tulos
+                } else {
+                    System.out.println("lukuyksikkö.lenght was " + lukuyksikkö.length);
+                }
+            } else {
+                final int TOINEN = 1;
+                String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
+                System.out.println(lkm);
+                tiedostojenlukumäärä = Integer.parseInt(lkm);
+            }
+            return 0;
+        }
+
+        /**
+         *
+         * @param luku double ihmiselle sopivassa yksikössä
+         * @param lukuyksikkö KiB Mib GiB or TiB ei vielä PiB, koska ei testiä
+         * @return int MB
+         */
+        private int  toMB(Double luku, String lukuyksikkö) {
             int mb;
-            if (lukuyksikkö[1].contains("KiB"))
+            if (lukuyksikkö.contains("KiB"))
                 mb = (int) Math.round(luku / KILO);
-            else if (lukuyksikkö[1].contains("GiB"))
+            else if (lukuyksikkö.contains("GiB"))
                 mb = (int) Math.round(luku * KILO);
-            else if (lukuyksikkö[1].contains("TiB"))
+            else if (lukuyksikkö.contains("TiB"))
                 mb = (int) Math.round(luku * KILO * KILO);
             else
                 mb = (int) Math.round(luku);
             System.out.println("Megatavut: " + mb);
-        }*/
-
+            return mb;
         }
 
+        public int getNOFiles() {
+            return tiedostojenlukumäärä;
+        }
     }
 
 }

@@ -50,7 +50,7 @@ public class RcloneRun {
      */
     public Status config(RcloneConfig rc, String token) {
 
-        ArrayList<String> komento = new ArrayList<String>(7);
+        ArrayList<String> komento = new ArrayList<>(7);
         komento.add(RCLONE);
         komento.add("config");
         komento.add("create");

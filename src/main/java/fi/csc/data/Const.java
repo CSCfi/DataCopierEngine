@@ -22,10 +22,10 @@ public class Const {
     static final String IDAURL = "https://ida.fairdata.fi/"+WEBDAV;
     static final String IDAS = "ida";
     static final String ALLASS = "allas";
-    static final String ALLASURL = "a3s.fi";
+    //static final String ALLASURL = "a3s.fi";
 
-    public static final Hashtable palveluht = new Hashtable<Integer, RcloneConfig>();
-    public static final Hashtable cname = new Hashtable<Integer, String>();
+    public static final Hashtable<Integer, RcloneConfig> palveluht = new Hashtable<>();
+    public static final Hashtable<Integer, String> cname = new Hashtable<>();
 
     static {
         palveluht.put(IDA, new RcloneConfig(1, webdav, nextcloud, IDAURL, false));

@@ -111,10 +111,8 @@ public class RcloneRun {
         try {
             Process process = Runtime.getRuntime().exec(komento);
 
-            RcloneRun.StreamGobbler streamGobbler =
-                    new RcloneRun.StreamGobbler(process.getInputStream());
-            RcloneRun.StreamGobbler errorStreamGobbler =
-                    new RcloneRun.StreamGobbler(process.getErrorStream());
+            RcloneRun.StreamGobbler streamGobbler = new RcloneRun.StreamGobbler(process.getInputStream(),
+                    process.getErrorStream());
             Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
@@ -192,18 +190,22 @@ public class RcloneRun {
 
     private  class StreamGobbler implements Runnable {
         private InputStream inputStream;
+        private InputStream errorStream;
         List<String> list;
         Double megatavut;
         int tiedostojenlukumäärä = -1;
 
-        public StreamGobbler(InputStream inputStream) {
+        public StreamGobbler(InputStream inputStream, InputStream errorStream) {
             this.inputStream = inputStream;
+            this.errorStream = errorStream;
         }
 
         @Override
         public void run() {
             list = new BufferedReader(new InputStreamReader(inputStream)).lines()
                     .collect(Collectors.toList());
+             new BufferedReader(new InputStreamReader(errorStream)).lines().forEach(s -> log.error(s));
+
         }
 
         /**
@@ -253,7 +255,7 @@ public class RcloneRun {
                 if (d.isPresent())
                     return d.getAsInt();
                 else
-                 return 0;
+                    return 0;
             }
         }
 
@@ -264,7 +266,7 @@ public class RcloneRun {
          * @param s String like Lasketaan MB: *                                  DSC08601.JPG:100% /14.344Mi, 14.331Mi/s, 0sTransferred:   	   14.344 MiB / 14.344 MiB, 100%, 11.831 MiB/s,
          * @return int MB
          */
-         private int laskeMB(String s) {
+        private int laskeMB(String s) {
             System.out.println("Lasketaan MB:"+ s);
             String ss = s.substring(MB.length() + 1, s.lastIndexOf(KAIKKI));
             String[] identtiset = ss.split(KAUTTA);

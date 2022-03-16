@@ -62,8 +62,9 @@ public class Engine implements QuarkusApplication {
                     if (null == destinationToken) {
                         destinationToken = destination.access_key_id;
                     }
-                    rr.config(destination, destinationToken);
-                    //log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
+                    s = rr.config(destination, destinationToken);
+                    virhetulostus("Config: ", s.errors);
+                    log.info("SourceToken: " + sourceToken + " DestinationToken: " + destinationToken);
                     source.secret_access_key = rs.getString(7);
                     destination.secret_access_key = rs.getString(16);
                     source.omistaja = rs.getString(3);
@@ -74,6 +75,7 @@ public class Engine implements QuarkusApplication {
                     destination.username = rs.getString(14);
                     s = rr.copy(source, destination, sourceToken, destinationToken);
                     log.info("Kesto: "+s.kesto);
+                    virhetulostus("Copy: ", s.errors);
                     Base.write(c2, s, copyid);
                 }
                 Statement stmt = rs.getStatement();
@@ -89,22 +91,10 @@ public class Engine implements QuarkusApplication {
         return 0;
     }
 
-    /**
-     * Poistettu käytöstöstä, koska ei toimi. Minulla on toimiviakin tokeneita,
-     * joten lakkasiko jossain versiossa toimimasta. Oire toimimattomuudesta on, että
-     * jokainen ajo tuottaa eri tuloksen: toimiva on tietysti pysyvä.
-     *
-     * @param token String selväkielinen Idan token
-     * @param rr    RcloneRun ajetaan obscure komento
-     * @return String lievästi salattu token --webdav-pass optiolle
-     */
-    private String obscure(String token, RcloneRun rr) {
-        if (null == token) return null;
-        else {
-            return rr.obfuscate(token);
-        }
-    }
-
+   void virhetulostus(String kohta, String errors) {
+        if (null != errors && !errors.isEmpty())
+            log.error(kohta + errors);
+   }
 }
 
 

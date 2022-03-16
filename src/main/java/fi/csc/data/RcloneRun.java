@@ -39,8 +39,13 @@ public class RcloneRun {
     static final String KAIKKI = "100%";
     static final double KILO = 1000;
 
-    @Inject
+    /*@Inject
     Logger log;
+    toimii satunnaisesti, mutta usein:
+    2022-03-16 15:51:00,623 ERROR [io.qua.run.Application] (main) Failed to start application (with profile prod): java.lang.NullPointerException: Cannot invoke "org.jboss.logging.Logger.info(Object)" because "this.log" is null
+	at fi.csc.data.RcloneRun.config(RcloneRun.java:73)
+	at fi.csc.data.Engine.run(Engine.java:61)
+     */
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf
@@ -119,7 +124,8 @@ public class RcloneRun {
             assert exitCode == 0;
             return  new Status(exitCode, streamGobbler.getMB(),
                                 streamGobbler.getKesto(),
-                                streamGobbler.getNOFiles());
+                                streamGobbler.getNOFiles(),
+                    streamGobbler.getErrors());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -192,6 +198,7 @@ public class RcloneRun {
         private InputStream inputStream;
         private InputStream errorStream;
         List<String> list;
+        StringBuilder sberrors = new StringBuilder();
         Double megatavut;
         int tiedostojenlukumäärä = -1;
 
@@ -204,10 +211,14 @@ public class RcloneRun {
         public void run() {
             list = new BufferedReader(new InputStreamReader(inputStream)).lines()
                     .collect(Collectors.toList());
-             new BufferedReader(new InputStreamReader(errorStream)).lines().forEach(s -> log.error(s));
+             new BufferedReader(new InputStreamReader(errorStream))
+                     .lines().forEach(s -> sberrors.append(s));
 
         }
 
+        String getErrors() {
+            return sberrors.toString();
+        }
         /**
          * Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
          * Transferred:            1 / 1, 100%
@@ -273,8 +284,11 @@ public class RcloneRun {
             if (identtiset.length > 2) {
                 String[] lukuyksikkö = identtiset[2].split(VÄLILYÖNTI);
                 if (lukuyksikkö.length > 8) {
-                    double luku = Double.parseDouble(lukuyksikkö[7].trim());
-                    return toMB(luku, lukuyksikkö[8]); //Tämä on oikea tulos
+                    int i = 6;
+                    while (lukuyksikkö[i].isEmpty())
+                        i++;
+                    double luku = Double.parseDouble(lukuyksikkö[i].trim());
+                    return toMB(luku, lukuyksikkö[i+1]); //Tämä on oikea tulos
                 } else {
                     System.out.println("lukuyksikkö.lenght was " + lukuyksikkö.length);
                 }
@@ -282,7 +296,12 @@ public class RcloneRun {
                 final int TOINEN = 1;
                 String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
                 System.out.println(lkm);
-                tiedostojenlukumäärä = Integer.parseInt(lkm);
+                if (lkm.contains("B")) {
+                    String[] lukuyksikkö = lkm.split(VÄLILYÖNTI);
+                    double luku = Double.parseDouble(lukuyksikkö[0].trim());
+                    return toMB(luku, lukuyksikkö[1]);
+                } else
+                    tiedostojenlukumäärä = Integer.parseInt(lkm);
             }
             return 0;
         }

@@ -39,6 +39,12 @@ public class RcloneRun {
     static final String KAIKKI = "100%";
     static final double KILO = 1000;
 
+    int copyid;
+
+    public RcloneRun(int id) {
+        this.copyid = id;
+    }
+
     /*@Inject
     Logger log;
     toimii satunnaisesti, mutta usein:
@@ -59,7 +65,7 @@ public class RcloneRun {
         komento.add(RCLONE);
         komento.add("config");
         komento.add("create");
-        komento.add((String)Const.cname.get(rc.palvelu));
+        komento.add((String)Const.cname.get(rc.palvelu)+copyid);
         komento.add(String.valueOf(rc.type)); //webdav or s3
         if (rc.palvelu < 3 || rc.palvelu > 6) { //ida || b2dropThis is secure because all is the constants of this program
             komento.add("vendor=" + rc.vendor);
@@ -151,7 +157,7 @@ public class RcloneRun {
             komento[2] = source.polku;
         } else {
              komento[1] = "copy";
-             komento[2] = Const.cname.get(source.palvelu) +
+             komento[2] = Const.cname.get(source.palvelu) + copyid +
              KAKSOISPISTE +
              source.omistaja;
              if (IDASTAGING == source.palvelu)
@@ -159,7 +165,7 @@ public class RcloneRun {
              komento[2] = komento[2] + source.polku;
         }
 
-        komento[3] = Const.cname.get(destination.palvelu) +
+        komento[3] = Const.cname.get(destination.palvelu) + copyid +
         KAKSOISPISTE +
         destination.omistaja;
         if (IDASTAGING == destination.palvelu) {

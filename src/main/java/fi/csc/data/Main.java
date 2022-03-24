@@ -1,25 +1,41 @@
 package fi.csc.data;
 
-import fi.csc.data.model.RcloneConfig;
-import fi.csc.data.model.Status;
-import io.quarkus.runtime.Quarkus;
-import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.annotations.CommandLineArguments;
-import io.quarkus.runtime.annotations.QuarkusMain;
+import io.agroal.api.AgroalDataSource;
 import org.jboss.logging.Logger;
 
 import javax.inject.Inject;
-import io.agroal.api.AgroalDataSource;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-//import java.util.List;
-
-@QuarkusMain
+@Path("/v1/run/")
 public class Main {
-    public static void main(String... args) {
-        Quarkus.run(Engine.class, args);
+
+
+    @Inject
+    Logger log;
+
+    @Inject
+    AgroalDataSource defaultDataSource;
+
+    @Inject
+    AgroalDataSource write; //DataSource
+
+
+    @GET
+     @Path("{id}")
+    public Response aja(@PathParam("id") String id) {
+
+        Integer copyid;
+        try {
+            copyid = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+           return Response.status(400, "int id missing or error: " + e.getMessage()).build();
+        }
+        Engine e = new Engine(copyid, log, defaultDataSource, write);
+        e.run();
+
+        return Response.ok("Pyyntö lähetetty\n").build();
     }
 }

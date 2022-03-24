@@ -3,44 +3,37 @@ package fi.csc.data;
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
 import io.agroal.api.AgroalDataSource;
-import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.annotations.CommandLineArguments;
 import org.jboss.logging.Logger;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class Engine implements QuarkusApplication {
 
-    @Inject
+public class Engine implements Runnable{
+    private int id;
     Logger log;
-
-    @Inject
     AgroalDataSource defaultDataSource;
+    AgroalDataSource write;
 
-     @Inject
-    AgroalDataSource write; //DataSource
-
-    @Inject
-    @CommandLineArguments
-    String[] args;
+    public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write) {
+        this.id = id;
+        this.log = log;
+        this.defaultDataSource = defaultDataSource;
+        this.write = write;
+    }
 
     @Override
-    public int run(String... args) throws Exception {
+    public void run()  {
 
-        if (args.length < 2) {
-            System.out.println("Hello World!");
-        } else {
-            System.out.println("Hello " + args[1]);
-        }
+        System.out.println("Hello " + id);
+
         try {
             Status s = null;
 	        Connection c2 = write.getConnection();
             Connection connection = defaultDataSource.getConnection();
-            ResultSet rs = Base.read(connection);
+            ResultSet rs = Base.read(connection, id);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
             } else {
@@ -50,7 +43,7 @@ public class Engine implements QuarkusApplication {
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
                     log.info("Source: " + source.type + " Destination: " + destination.type);
-                    RcloneRun rr = new RcloneRun();
+                    RcloneRun rr = new RcloneRun(copyid);
                     String sourceToken = rs.getString(9);
                     String destinationToken = rs.getString(18);
                     source.access_key_id = rs.getString(6);
@@ -86,9 +79,7 @@ public class Engine implements QuarkusApplication {
             connection.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-            return 10;
         }
-        return 0;
     }
 
    void virhetulostus(String kohta, String errors) {

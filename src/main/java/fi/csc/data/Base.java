@@ -18,7 +18,7 @@ public class Base {
             " ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token, r.copyid " +
             "FROM request r, palvelu source, palvelu destination, auth auths, auth ad " +
             "WHERE r.source = source.caseid AND r.destination = destination.caseid AND " +
-            "source.Auth = auths.authid AND destination.Auth = ad.authid and r.status IS NULL";
+            "source.Auth = auths.authid AND destination.Auth = ad.authid AND r.status IS NULL AND r.copyid=?";
 
     final static String UPDATE = "UPDATE request set status=?, MB=?, wallclock=?, nofiles=? WHERE copyid=?";
     final static String START  = "UPDATE request set status=? WHERE copyid=?";
@@ -29,9 +29,10 @@ public class Base {
      * @param con Connection to use
      * @return ResultSet 19 values data from database
      */
-    static ResultSet read(Connection con) {
+    static ResultSet read(Connection con, int id) {
         try {
             PreparedStatement stmnt = con.prepareStatement(SELECT);
+            stmnt.setInt(1, id);
            return stmnt.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();

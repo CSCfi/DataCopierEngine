@@ -15,13 +15,14 @@ public class Base {
     final static String SELECT = "SELECT source.PalveluID, source.Protokolla, source.omistaja, source.polku," +
             " auths.username, auths.accessKey, auths.secretKey, auths.projectID, auths.token," +
             " destination.PalveluID, destination.Protokolla, destination.omistaja,  destination.polku," +
-            " ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token, r.copyid " +
+            " ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token, r.copyid, auths.authid, ad.authid " +
             "FROM request r, palvelu source, palvelu destination, auth auths, auth ad " +
             "WHERE r.source = source.caseid AND r.destination = destination.caseid AND " +
             "source.Auth = auths.authid AND destination.Auth = ad.authid AND r.status IS NULL AND r.copyid=?";
 
     final static String UPDATE = "UPDATE request set status=?, MB=?, wallclock=?, nofiles=? WHERE copyid=?";
     final static String START  = "UPDATE request set status=? WHERE copyid=?";
+    final static String DELETE = "DELETE FROM auth WHERE authid=?";
 
     /**
      * Lukee tietokannasta aloittamattomat työt
@@ -29,7 +30,7 @@ public class Base {
      * @param con Connection to use
      * @return ResultSet 19 values data from database
      */
-    static ResultSet read(Connection con, int id) {
+    ResultSet read(Connection con, int id) {
         try {
             PreparedStatement stmnt = con.prepareStatement(SELECT);
             stmnt.setInt(1, id);
@@ -48,7 +49,7 @@ public class Base {
      * @param copyid int käsitellyn tietokantarivin tunnus, jolle siis kirjoitetaan
      * @return int lines to write or negative error
      */
-    public static int write(Connection c2, Status s, int copyid) {
+    public int write(Connection c2, Status s, int copyid) {
         if (null != s) {
             try {
                 PreparedStatement statement = c2.prepareStatement(UPDATE);
@@ -65,7 +66,6 @@ public class Base {
                 statement.setInt(5, copyid);
                 int tulos = statement.executeUpdate();
                 statement.close();
-                c2.close();
                 return tulos;
             }
              catch(SQLException e){
@@ -82,7 +82,7 @@ public class Base {
      * @param copyid int käsitellyn tietokantarivin tunnus, jolle siis kirjoitetaan
      * @return int lines to write or negative error
      */
-    public static int start(Connection c2, int copyid) {
+    public int start(Connection c2, int copyid) {
          try {
                 PreparedStatement statement = c2.prepareStatement(START);
                 statement.setInt(1, 11); // status running
@@ -95,5 +95,23 @@ public class Base {
                     e.printStackTrace();
                     return -2;
                 }
+    }
+
+    /**
+     * Kopioinnin onnistuttua poistetaan autentikaatiotiedot tietokannasta
+     *
+     * @param c Connection with DELETE rights
+     * @param id int Line authid to delete
+     * @return int number of the deleted lines
+     */
+    public int delete(Connection c, int id) {
+        try {
+            PreparedStatement stmnt = c.prepareStatement(DELETE);
+            stmnt.setInt(1, id);
+            return stmnt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 }

@@ -30,16 +30,18 @@ public class Engine implements Runnable{
         System.out.println("Hello " + id);
 
         try {
-            Status s = null;
-	        Connection c2 = write.getConnection();
+            Status s;
+            Connection c2 = write.getConnection();
             Connection connection = defaultDataSource.getConnection();
-            ResultSet rs = Base.read(connection, id);
+            Base db = new Base();
+            ResultSet rs = db.read(connection, id);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
             } else {
                 if (rs.first()) {
                     int copyid = rs.getInt(19);
-                    Base.start(c2, copyid);
+                    System.out.println("rs.First!");
+                    db.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
                     log.info("Source: " + source.type + " Destination: " + destination.type);
@@ -69,18 +71,22 @@ public class Engine implements Runnable{
                     s = rr.copy(source, destination, sourceToken, destinationToken);
                     log.info("Kesto: "+s.kesto);
                     virhetulostus("Copy: ", s.errors);
-                    Base.write(c2, s, copyid);
+                    db.write(c2, s, copyid);
+                    db.delete(c2, rs.getInt(20));
+                    db.delete(c2, rs.getInt(21));
+                    c2.close();
+                    Statement stmt = rs.getStatement();
+                    rs.close();
+                    stmt.close();
+                } else { // rs.first was NOT
+                    log.error("There was NO rs.first()");
                 }
-                Statement stmt = rs.getStatement();
-                rs.close();
-                stmt.close();
-
             }
-            connection.close();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
+        connection.close();
+    } catch (SQLException throwables) {
+        throwables.printStackTrace();
     }
+}
 
    void virhetulostus(String kohta, String errors) {
         if (null != errors && !errors.isEmpty())

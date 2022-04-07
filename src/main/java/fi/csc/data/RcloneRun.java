@@ -28,7 +28,8 @@ import static fi.csc.data.model.RcloneConfig.ASETUKSET;
 
 public class RcloneRun {
 
-    static final String RCLONE = "/work/rclone"; //kontissa, muista synckronoida dockerfilen kanssa
+    static final String RCLONE = "/work/rclone";
+    static final String CONFIG = "config";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
     static final String LAINAUSMERKKI ="\"";
@@ -45,13 +46,14 @@ public class RcloneRun {
         this.copyid = id;
     }
 
-    /*@Inject
-    Logger log;
-    toimii satunnaisesti, mutta usein:
-    2022-03-16 15:51:00,623 ERROR [io.qua.run.Application] (main) Failed to start application (with profile prod): java.lang.NullPointerException: Cannot invoke "org.jboss.logging.Logger.info(Object)" because "this.log" is null
-	at fi.csc.data.RcloneRun.config(RcloneRun.java:73)
-	at fi.csc.data.Engine.run(Engine.java:61)
-     */
+   public Status delete(RcloneConfig rc) {
+       ArrayList<String> komento = new ArrayList<>(4);
+        komento.add(RCLONE);
+        komento.add(CONFIG);
+        komento.add("delete");
+        komento.add((String)Const.cname.get(rc.palvelu)+copyid);
+        return realRun(komento.toArray(new String[komento.size()]));
+   }
 
     /**
      * Run rclone config to create both source and destination. Write  .config/rclone/rclone.conf

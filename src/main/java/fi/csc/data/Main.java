@@ -37,10 +37,10 @@ public class Main {
     @GET
     @Path("{id}")
     public Response aja(@PathParam("id") String id,@HeaderParam("Apikey") String apikeytocheck) {
-        /*if (!apikey.equals(apikeytocheck)) {
+        if (!apikey.equals(apikeytocheck)) {
             log.error("Invalid Apikey: "+ apikeytocheck);
             return ACCESSDENIED;
-        }*/
+        }
 
         int copyid;
         try {

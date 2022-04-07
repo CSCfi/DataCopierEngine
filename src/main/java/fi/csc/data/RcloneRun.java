@@ -46,13 +46,19 @@ public class RcloneRun {
         this.copyid = id;
     }
 
-   public Status delete(RcloneConfig rc) {
+   public int delete(RcloneConfig rc) {
        ArrayList<String> komento = new ArrayList<>(4);
         komento.add(RCLONE);
         komento.add(CONFIG);
         komento.add("delete");
         komento.add((String)Const.cname.get(rc.palvelu)+copyid);
-        return realRun(komento.toArray(new String[komento.size()]));
+       try {
+           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]));
+           return process.waitFor();
+       } catch (IOException | InterruptedException e) {
+           e.printStackTrace();
+           return -1;
+       }
    }
 
     /**

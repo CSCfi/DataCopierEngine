@@ -2,11 +2,7 @@ package fi.csc.data;
 
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
-//import io.netty.handler.codec.base64.Base64Encoder;
-//import org.jboss.logging.Logger;
 
-//import javax.inject.Inject;
-import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,7 +15,6 @@ import java.util.concurrent.Executors;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
-import org.jboss.logging.Logger;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
@@ -233,17 +228,19 @@ public class RcloneRun {
         String getErrors() {
             return sberrors.toString();
         }
+
+
         /**
          * Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
          * Transferred:            1 / 1, 100%
          * Elapsed time:         1.3s
          */
-
         public double getKesto() {
-            OptionalDouble d = list.stream().filter(s -> s.contains(AIKA)).mapToDouble(s -> laskekesto(s)).max();
-            if (d.isPresent())
-                return d.getAsDouble();
-            else
+            if (null != list) {
+                OptionalDouble d = list.stream().filter(s -> s.contains(AIKA)).mapToDouble(s -> laskekesto(s)).max();
+                if (d.isPresent())
+                    return d.getAsDouble();
+            }
                 return -1.0;
         }
 
@@ -274,13 +271,14 @@ public class RcloneRun {
             if (null != megatavut)
                 return (int) Math.round(megatavut);
             else {
-                OptionalInt d = list.stream()
-                        .filter(s -> s.contains(MB) && s.contains(KAIKKI))
-                        .mapToInt(s -> laskeMB(s)).max();
-                if (d.isPresent())
-                    return d.getAsInt();
-                else
-                    return 0;
+                if (null != list) {
+                    OptionalInt d = list.stream()
+                            .filter(s -> s.contains(MB) && s.contains(KAIKKI))
+                            .mapToInt(s -> laskeMB(s)).max();
+                    if (d.isPresent())
+                        return d.getAsInt();
+                }
+                return 0; //ehkä erillinen arvo en tiedälle
             }
         }
 

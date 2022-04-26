@@ -108,7 +108,9 @@ public class Base {
         try {
             PreparedStatement stmnt = c.prepareStatement(DELETE);
             stmnt.setInt(1, id);
-            return stmnt.executeUpdate();
+            int pa = stmnt.executeUpdate();
+            stmnt.close();
+            return pa;
         } catch (SQLException e) {
             e.printStackTrace();
             return -1;

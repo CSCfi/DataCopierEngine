@@ -122,6 +122,7 @@ public class RcloneRun {
                 return new Status(-5);
             }
         }
+        long alkuaika = System.currentTimeMillis();
         try {
             Process process = Runtime.getRuntime().exec(komento);
 
@@ -130,9 +131,10 @@ public class RcloneRun {
             Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
+            int kesto = (int) ((System.currentTimeMillis()-alkuaika)/1000L);
             assert exitCode == 0;
             return  new Status(exitCode, streamGobbler.getMB(),
-                                streamGobbler.getKesto(),
+                                kesto,
                                 streamGobbler.getNOFiles(),
                     streamGobbler.getErrors());
         } catch (IOException e) {
@@ -228,44 +230,6 @@ public class RcloneRun {
         String getErrors() {
             return sberrors.toString();
         }
-
-
-        /**
-         * Yrittää parsia rclone -P tulostuksen: DSC08611.JPG:  2% /11.719Mi, 0/s, -Transferred:   	   11.719 MiB / 11.719 MiB, 100%, 0 B/s, ETA -
-         * Transferred:            1 / 1, 100%
-         * Elapsed time:         1.3s
-         */
-        public double getKesto() {
-            if (null != list) {
-                OptionalDouble d = list.stream().filter(s -> s.contains(AIKA)).mapToDouble(s -> laskekesto(s)).max();
-                if (d.isPresent())
-                    return d.getAsDouble();
-            }
-                return -1.0;
-        }
-
-        /**
-         * Tolkkua pitäisi saada  myös "1.1sTransferred:   	          0 B / 13.594 MiB, 0%, 0 B/"
-         * Koska sisältää myös MB yritään tuottaa sivuvaikutus
-         *
-         * @param s String sisältää käytetyn ajan ja ehkä siirretyt tavut
-         * @return double seinäkelloaika sekuntteina
-         */
-        private double laskekesto(String s) {
-            String ss = "-3.0"; //vain error koodi
-            if (s.contains(MB)) { //"Transferred:"
-                ss = s.substring(AIKA.length() + 1, s.indexOf(MB) -1).trim();
-                //tämä ylimääräistä! Ei aikaa vaan MB
-                String mb = s.substring(s.indexOf(MB) + MB.length());
-                String[] identtiset = mb.split(KAUTTA);
-                String[] lukuyksikkö = identtiset[1].trim().split(VÄLILYÖNTI);
-                megatavut = Double.parseDouble(lukuyksikkö[0]);
-            } else {
-                ss = s.substring(AIKA.length() + 1, s.lastIndexOf("s")).trim();
-            }
-            return Double.parseDouble(ss);
-        }
-
 
         public int getMB() {
             if (null != megatavut)

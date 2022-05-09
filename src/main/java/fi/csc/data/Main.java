@@ -49,7 +49,8 @@ public class Main {
             return Response.status(400, "int id missing or error: " + e.getMessage()).build();
         }
         Engine e = new Engine(copyid, log, defaultDataSource, write);
-        e.run();
+        Thread t1 = new Thread(e);
+        t1.start();
 
         return Response.ok("Pyyntö lähetetty\n").build();
     }

@@ -155,54 +155,61 @@ public class RcloneRun {
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
     public Status copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
-        String[] komento = new String[9];
-        komento[0] = RCLONE;
+        ArrayList<String>  komento = new ArrayList<String>(10);
+        StringBuilder apu = new StringBuilder(300); //more than 255. Note Initial, so no really matter
+        komento.add(RCLONE);
         if (source.open && (ALLASPUBLIC == source.palvelu)) {
-            komento[1] = "copyurl";
-            komento[2] = source.polku;
+            komento.add("copyurl");
+            komento.add(source.polku);
         } else {
-             komento[1] = "copy";
-             komento[2] = Const.cname.get(source.palvelu) + copyid +
-             KAKSOISPISTE +
-             source.omistaja;
+             komento.add("copy");
+             apu.append(Const.cname.get(source.palvelu));
+             apu.append(copyid);
+             apu.append(KAKSOISPISTE);
+             apu.append(source.omistaja);
              if (IDASTAGING == source.palvelu)
-                 komento[2] = komento[2] + PLUS;
-             komento[2] = komento[2] + source.polku;
+                 apu.append(PLUS);
+             apu.append(source.polku);
+             komento.add(apu.toString());
         }
-
-        komento[3] = Const.cname.get(destination.palvelu) + copyid +
-        KAKSOISPISTE +
-        destination.omistaja;
+        apu.delete(0,apu.capacity());
+        apu.append(Const.cname.get(destination.palvelu));
+        apu.append(copyid);
+        apu.append(KAKSOISPISTE);
+        apu.append(destination.omistaja);
         if (IDASTAGING == destination.palvelu) {
-            komento[3] = komento[3] + PLUS;
+            apu.append(PLUS);
         }
-        komento[3] = komento[3] + destination.polku;
-        komento[4] = "--webdav-headers";
+        apu.append(destination.polku);
+        komento.add(apu.toString());
+        komento.add("--webdav-headers");
         // Ei toimine jos sekä source että destination webdav, eikä saa tulla ylimääräisiä salaisuuksia
        if ((null != sourceToken) && (null != source.username)) {
-           komento[5] = "Authorization,Basic "+new String(Base64.getEncoder().
+           komento.add("Authorization,Basic "+new String(Base64.getEncoder().
                    encode((source.username+":"+sourceToken).
-                           getBytes(StandardCharsets.ISO_8859_1)));
+                           getBytes(StandardCharsets.ISO_8859_1))));
        }
        if ((null != destinationToken) && (null != destination.username)) {
-           komento[5] = "Authorization," + LAINAUSMERKKI +"Basic "+new String(Base64.getEncoder().
+           komento.add("Authorization," + LAINAUSMERKKI +"Basic "+new String(Base64.getEncoder().
                    encode((destination.username+":"+destinationToken).
-                           getBytes(StandardCharsets.ISO_8859_1)))+LAINAUSMERKKI;
+                           getBytes(StandardCharsets.ISO_8859_1)))+LAINAUSMERKKI);
        }
-       komento[6] = "--s3-secret-access-key";
+       komento.add("--s3-secret-access-key");
         // ei toimine, jos sekä source että destination s3
         if ((null != source.access_key_id) && (null != source.secret_access_key)) {
-            komento[7] = source.secret_access_key;
+            komento.add(source.secret_access_key);
         }
         if ((null != destination.access_key_id) && (null != destination.secret_access_key)) {
-            komento[7] = destination.secret_access_key;
+            komento.add(destination.secret_access_key);
         }
-        komento[8] = "-P";
+        komento.add("--s3-chunk-size");
+        komento.add("100M");
+        komento.add("-P");
         /*komento[8] = "-vv";
         komento[9] = "--dump";
         komento[10] =   "auth";*/
         //System.out.println(komento.toString());
-        return realRun(komento);
+        return realRun(komento.toArray(new String[komento.size()]));
     }
 
     private  class StreamGobbler implements Runnable {

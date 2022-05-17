@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Engine" type="JarApplication" singleton="false">
-    <option name="JAR_PATH" value="$PROJECT_DIR$/target/quarkus-app/quarkus-run.jar" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="ALTERNATIVE_JRE_PATH" />
-    <method v="2" />
-  </configuration>
-</component>

@@ -139,8 +139,10 @@ public class RcloneRun {
                     streamGobbler.getErrors());
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("IOException when running rclone:" + e.getMessage());
         } catch (InterruptedException e) {
             e.printStackTrace();
+            System.out.println("InterruptedException when running rclone:" + e.getMessage());
         }
         return new Status(-2);
     }

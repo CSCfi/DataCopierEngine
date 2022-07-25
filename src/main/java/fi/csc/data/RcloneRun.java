@@ -24,6 +24,7 @@ import static fi.csc.data.model.RcloneConfig.ASETUKSET;
 public class RcloneRun {
 
     static final String RCLONE = "/work/rclone";
+    static final String[] RCLONEHOME = {"HOME=/home/rclone/"};
     static final String CONFIG = "config";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";
@@ -48,7 +49,7 @@ public class RcloneRun {
         komento.add("delete");
         komento.add(Const.cname.get(rc.palvelu)+copyid);
        try {
-           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]),null);
+           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]), RCLONEHOME);
            return process.waitFor();
        } catch (IOException | InterruptedException e) {
            e.printStackTrace();
@@ -124,7 +125,7 @@ public class RcloneRun {
         }
         long alkuaika = System.currentTimeMillis();
         try {
-            Process process = Runtime.getRuntime().exec(komento, null);
+            Process process = Runtime.getRuntime().exec(komento, RCLONEHOME);
 
             RcloneRun.StreamGobbler streamGobbler = new RcloneRun.StreamGobbler(process.getInputStream(),
                     process.getErrorStream());

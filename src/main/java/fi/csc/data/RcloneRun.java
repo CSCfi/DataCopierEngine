@@ -46,9 +46,9 @@ public class RcloneRun {
         komento.add(RCLONE);
         komento.add(CONFIG);
         komento.add("delete");
-        komento.add((String)Const.cname.get(rc.palvelu)+copyid);
+        komento.add(Const.cname.get(rc.palvelu)+copyid);
        try {
-           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]));
+           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]),null);
            return process.waitFor();
        } catch (IOException | InterruptedException e) {
            e.printStackTrace();
@@ -68,7 +68,7 @@ public class RcloneRun {
         komento.add(RCLONE);
         komento.add("config");
         komento.add("create");
-        komento.add((String)Const.cname.get(rc.palvelu)+copyid);
+        komento.add(Const.cname.get(rc.palvelu)+copyid);
         komento.add(String.valueOf(rc.type)); //webdav or s3
         if (rc.palvelu < 3 || rc.palvelu > 6) { //ida || b2dropThis is secure because all is the constants of this program
             komento.add("vendor=" + rc.vendor);
@@ -124,7 +124,7 @@ public class RcloneRun {
         }
         long alkuaika = System.currentTimeMillis();
         try {
-            Process process = Runtime.getRuntime().exec(komento);
+            Process process = Runtime.getRuntime().exec(komento, null);
 
             RcloneRun.StreamGobbler streamGobbler = new RcloneRun.StreamGobbler(process.getInputStream(),
                     process.getErrorStream());
@@ -214,9 +214,9 @@ public class RcloneRun {
         return realRun(komento.toArray(new String[komento.size()]));
     }
 
-    private  class StreamGobbler implements Runnable {
-        private InputStream inputStream;
-        private InputStream errorStream;
+    private static class StreamGobbler implements Runnable {
+        private final InputStream inputStream;
+        private final InputStream errorStream;
         List<String> list;
         StringBuilder sberrors = new StringBuilder();
         Double megatavut;

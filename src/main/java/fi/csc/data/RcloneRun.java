@@ -24,7 +24,7 @@ import static fi.csc.data.model.RcloneConfig.ASETUKSET;
 public class RcloneRun {
 
     static final String RCLONE = "/work/rclone";
-    static final String[] RCLONEHOME = {"HOME=/home/rclone/"};
+    static final String[] RCLONEHOME = {"HOME=/work/"};
     static final String CONFIG = "config";
     static final String KAKSOISPISTE = ":";
     static final String PLUS = "+";

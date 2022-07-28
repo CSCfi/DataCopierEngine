@@ -13,7 +13,7 @@ You can run your application in dev mode that enables live coding using:
 
 The application can be packaged using:
 ```shell script
-./mvnw package
+./mvn package
 ```
 It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
 Be aware that it’s not an _über-jar_ as the dependencies are copied into the `ta
@@ -24,19 +24,16 @@ rget/quarkus-app/lib/` directory.
 
 You can create a native executable using: 
 ```shell script
-./mvnw package -Pnative
+./mvn package -Pnative
 ```
+https://github.com/CSCfi/DataCopierEngine/blob/main/src/main/docker/Dockerfile.native
+has further actually podman build instructions
+
 ## Provided Code
 
-### YAML Config
+### Config
 
-Configure your application with YAML
-
-[Related guide section...](https://quarkus.io/guides/config-reference#configurat
-ion-examples)
-
-The Quarkus application configuration is located in `src/main/resources/applicat
-ion.yml`.
+https://github.com/CSCfi/DataCopierEngine/tree/main/src/main/resources
 
 ## Author
 

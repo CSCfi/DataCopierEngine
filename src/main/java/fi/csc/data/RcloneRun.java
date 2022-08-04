@@ -34,8 +34,6 @@ public class RcloneRun {
     static final String AIKA = "Elapsed time:";
     static final String MB  = "Transferred:";
     static final String KAIKKI = "100%";
-    static final double KILO = 1000;
-
     int copyid;
 
     public RcloneRun(int id) {
@@ -85,7 +83,7 @@ public class RcloneRun {
             komento.add(ASETUKSET[1]);
             komento.add(ASETUKSET[2]);
         }
-        return realRun(komento.toArray(new String[komento.size()]));
+        return realRun(komento.toArray(new String[komento.size()]), null);
     }
 
     /**
@@ -116,7 +114,7 @@ public class RcloneRun {
      * @param komento String[] komento ja kaikki optiot, koko komeus suoritetetaan
      * @return Status, jossa int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
-    private Status realRun(String[] komento) {
+    private Status realRun(String[] komento, Seurantasäie ss) {
         for (int i = 0; i < komento.length; i++) { // vain debuggaus: voi optimoida pois!
             if (null == komento[i]) {
                 System.err.println(i + " was null after " + komento[i-1]);
@@ -127,8 +125,11 @@ public class RcloneRun {
         try {
             Process process = Runtime.getRuntime().exec(komento, RCLONEHOME);
 
-            RcloneRun.StreamGobbler streamGobbler = new RcloneRun.StreamGobbler(process.getInputStream(),
+            StreamsHandling streamGobbler = new StreamsHandling(process.getInputStream(),
                     process.getErrorStream());
+            if (null != ss) {
+                ss.setStreamsHandling(streamGobbler);
+            }
             Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
@@ -157,7 +158,8 @@ public class RcloneRun {
      * @param destinationToken String kohdejärjestelmän sovellussalasana, vain toinen tarvitaan
      * @return int 0 jos kaikki meni hyvin, muuten virhekoodi
      */
-    public Status copy(RcloneConfig source, RcloneConfig destination, String sourceToken, String destinationToken) {
+    public Status copy(RcloneConfig source, RcloneConfig destination, String sourceToken,
+                       String destinationToken, Seurantasäie ss) {
         ArrayList<String>  komento = new ArrayList<String>(10);
         StringBuilder apu = new StringBuilder(300); //more than 255. Note Initial, so no really matter
         komento.add(RCLONE);
@@ -212,109 +214,7 @@ public class RcloneRun {
         komento[9] = "--dump";
         komento[10] =   "auth";*/
         //System.out.println(komento.toString());
-        return realRun(komento.toArray(new String[komento.size()]));
-    }
-
-    private static class StreamGobbler implements Runnable {
-        private final InputStream inputStream;
-        private final InputStream errorStream;
-        List<String> list;
-        StringBuilder sberrors = new StringBuilder();
-        Double megatavut;
-        int tiedostojenlukumäärä = -1;
-
-        public StreamGobbler(InputStream inputStream, InputStream errorStream) {
-            this.inputStream = inputStream;
-            this.errorStream = errorStream;
-        }
-
-        @Override
-        public void run() {
-            list = new BufferedReader(new InputStreamReader(inputStream)).lines()
-                    .collect(Collectors.toList());
-             new BufferedReader(new InputStreamReader(errorStream))
-                     .lines().forEach(s -> sberrors.append(s));
-
-        }
-
-        String getErrors() {
-            return sberrors.toString();
-        }
-
-        public int getMB() {
-            if (null != megatavut)
-                return (int) Math.round(megatavut);
-            else {
-                if (null != list) {
-                    OptionalInt d = list.stream()
-                            .filter(s -> s.contains(MB) && s.contains(KAIKKI))
-                            .mapToInt(s -> laskeMB(s)).max();
-                    if (d.isPresent())
-                        return d.getAsInt();
-                }
-                return 0; //ehkä erillinen arvo en tiedälle
-            }
-        }
-
-
-        /**
-         * Yrittää parsia siirretyt MB.
-         *
-         * @param s String like Lasketaan MB: *                                  DSC08601.JPG:100% /14.344Mi, 14.331Mi/s, 0sTransferred:   	   14.344 MiB / 14.344 MiB, 100%, 11.831 MiB/s,
-         * @return int MB
-         */
-        private int laskeMB(String s) {
-            System.out.println("Lasketaan MB:"+ s);
-            String ss = s.substring(MB.length() + 1, s.lastIndexOf(KAIKKI));
-            String[] identtiset = ss.split(KAUTTA);
-            if (identtiset.length > 2) {
-                String[] lukuyksikkö = identtiset[2].split(VÄLILYÖNTI);
-                if (lukuyksikkö.length > 8) {
-                    int i = 6;
-                    while (lukuyksikkö[i].isEmpty())
-                        i++;
-                    double luku = Double.parseDouble(lukuyksikkö[i].trim());
-                    return toMB(luku, lukuyksikkö[i+1]); //Tämä on oikea tulos
-                } else {
-                    System.out.println("lukuyksikkö.lenght was " + lukuyksikkö.length);
-                }
-            } else {
-                final int TOINEN = 1;
-                String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
-                System.out.println(lkm);
-                if (lkm.contains("B")) {
-                    String[] lukuyksikkö = lkm.split(VÄLILYÖNTI);
-                    double luku = Double.parseDouble(lukuyksikkö[0].trim());
-                    return toMB(luku, lukuyksikkö[1]);
-                } else
-                    tiedostojenlukumäärä = Integer.parseInt(lkm);
-            }
-            return 0;
-        }
-
-        /**
-         *
-         * @param luku double ihmiselle sopivassa yksikössä
-         * @param lukuyksikkö KiB Mib GiB or TiB ei vielä PiB, koska ei testiä
-         * @return int MB
-         */
-        private int  toMB(Double luku, String lukuyksikkö) {
-            int mb;
-            if (lukuyksikkö.contains("KiB"))
-                mb = (int) Math.round(luku / KILO);
-            else if (lukuyksikkö.contains("GiB"))
-                mb = (int) Math.round(luku * KILO);
-            else if (lukuyksikkö.contains("TiB"))
-                mb = (int) Math.round(luku * KILO * KILO);
-            else
-                mb = (int) Math.round(luku);
-            System.out.println("Megatavut: " + mb);
-            return mb;
-        }
-
-        public int getNOFiles() {
-            return tiedostojenlukumäärä;
-        }
+        return realRun(komento.toArray(new String[komento.size()]), ss);
     }
 
 }

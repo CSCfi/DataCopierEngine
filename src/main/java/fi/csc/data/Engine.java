@@ -33,7 +33,7 @@ public class Engine implements Runnable{
             Status s;
             Connection c2 = write.getConnection();
             Connection connection = defaultDataSource.getConnection();
-            Base db = new Base();
+            Base db = new Base(c2, id);
             ResultSet rs = db.read(connection, id);
             if (null == rs) {
                 log.info("Nothing to do, rs was null");
@@ -67,7 +67,8 @@ public class Engine implements Runnable{
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
                     destination.username = rs.getString(14);
-                    s = rr.copy(source, destination, sourceToken, destinationToken);
+                    Seurantasäie ss = new Seurantasäie(db);
+                    s = rr.copy(source, destination, sourceToken, destinationToken, ss);
                     log.info("Kesto: "+s.kesto);
                     virhetulostus("Copy: ", s.errors);
                     db.write(c2, s, copyid);

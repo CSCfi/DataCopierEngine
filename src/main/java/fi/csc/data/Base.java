@@ -20,9 +20,17 @@ public class Base {
             "WHERE r.source = source.caseid AND r.destination = destination.caseid AND " +
             "source.Auth = auths.authid AND destination.Auth = ad.authid AND r.status IS NULL AND r.copyid=?";
 
-    final static String UPDATE = "UPDATE request set status=?, MB=?, wallclock=?, nofiles=? WHERE copyid=?";
+    final static String WRITE = "UPDATE request set status=?, MB=?, wallclock=?, nofiles=? WHERE copyid=?";
+    final static String UPDATE = "UPDATE request set MB=?, nofiles=? WHERE copyid=?";
     final static String START  = "UPDATE request set status=? WHERE copyid=?";
     final static String DELETE = "DELETE FROM auth WHERE authid=?";
+    private final Connection c2;
+    private final int id;
+
+    public Base(Connection connection, int id) {
+        this.c2 = connection;
+        this.id =id;
+    }
 
     /**
      * Lukee tietokannasta aloittamattomat työt
@@ -41,6 +49,21 @@ public class Base {
         }
     }
 
+    public int update(int mb, int no) {
+        try {
+            PreparedStatement statement = c2.prepareStatement(UPDATE);
+            statement.setInt(1, mb);
+            statement.setInt(2, no);
+            statement.setInt(3, id);
+            int tulos = statement.executeUpdate();
+            statement.close();
+            return tulos;
+        } catch(SQLException e){
+            e.printStackTrace();
+            return -2;
+        }
+    }
+
     /**
      * Kirjoitta tietokantaan rclone komennon lopputuloksen
      *
@@ -52,7 +75,7 @@ public class Base {
     public int write(Connection c2, Status s, int copyid) {
         if (null != s) {
             try {
-                PreparedStatement statement = c2.prepareStatement(UPDATE);
+                PreparedStatement statement = c2.prepareStatement(WRITE);
                 statement.setInt(1, s.exitCode);
                 statement.setInt(2, s.MB );
                 if (s.kesto < 0)

@@ -1,8 +1,15 @@
 package fi.csc.data;
 
+import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
+import org.jboss.logging.Logger;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
@@ -12,21 +19,23 @@ import static fi.csc.data.RcloneRun.KAUTTA;
 import static fi.csc.data.RcloneRun.MB;
 import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
 
-public class StreamsHandling implements Runnable {
+public class StreamsHandling {
 
     static final double KILO = 1000;
-    private final InputStream inputStream;
-    private final InputStream errorStream;
-    List<String> list;
+    Logger log;
+    private final BufferedInputStream binputStream;
+    private final BufferedInputStream berrorStream;
+    List<String> previousl;
+    String input;
     StringBuilder sberrors = new StringBuilder();
     Double megatavut;
     int tiedostojenlukumäärä = -1;
 
     public StreamsHandling(InputStream inputStream, InputStream errorStream) {
-        this.inputStream = inputStream;
-        this.errorStream = errorStream;
+        this.binputStream = new BufferedInputStream(inputStream);
+        this.berrorStream = new BufferedInputStream(errorStream);
     }
-
+/*
     @Override
     public void run() {
         list = new BufferedReader(new InputStreamReader(inputStream)).lines()
@@ -35,24 +44,35 @@ public class StreamsHandling implements Runnable {
                 .lines().forEach(s -> sberrors.append(s));
 
     }
+*/
+    public int update() {
+        try {
+            int available = binputStream.available();
+            byte[] saatavilla = binputStream.readNBytes(available);
+            input = new String(saatavilla, StandardCharsets.UTF_8);
+            sberrors.append(berrorStream.readNBytes(berrorStream.available()));
+            return available;
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+         return -1;
+    }
 
     String getErrors() {
         return sberrors.toString();
     }
 
     public int getMB() {
-        if (null != megatavut)
-            return (int) Math.round(megatavut);
-        else {
-            if (null != list) {
-                OptionalInt d = list.stream()
-                        .filter(s -> s.contains(MB) && s.contains(KAIKKI))
+            if (null != input) {
+                OptionalInt d = input.lines()
+                        .filter(s -> s.contains(MB))
                         .mapToInt(s -> laskeMB(s)).max();
                 if (d.isPresent())
                     return d.getAsInt();
+                else if (null != megatavut)
+                    return (int) Math.round(megatavut);
             }
             return 0; //ehkä erillinen arvo en tiedälle
-        }
     }
 
 

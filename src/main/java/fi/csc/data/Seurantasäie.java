@@ -1,36 +1,30 @@
 package fi.csc.data;
 
-import io.quarkus.scheduler.Scheduled;
-import javax.enterprise.context.ApplicationScoped;
-import java.util.concurrent.atomic.AtomicInteger;
-
-@ApplicationScoped
 public class Seurantasäie {
     Base db;
+    SeurantaBean sb;
     StreamsHandling sh;
-    private AtomicInteger counter = new AtomicInteger();
-    public Seurantasäie(Base db) {
+
+    public Seurantasäie(Base db, SeurantaBean sb) {
         this.db = db;
+        this.sb = sb;
     }
 
     public void setStreamsHandling(StreamsHandling streamGobbler) {
         this.sh = streamGobbler;
+        sb.register(this);
     }
 
-
-     public int get() {
-        return counter.get();
+    public void updataStatus(){
+        int avail = sh.update();
+        if (avail > 0) {
+            int mb = sh.getMB();
+            int files = sh.getNOFiles();
+            db.update(mb, files);
+        }
     }
 
-    @Scheduled(every="10s")
-    void increment() {
-        counter.incrementAndGet();
-        updataStatus();
-    }
-
-    private void updataStatus(){
-        int mb = sh.getMB();
-        int files = sh.getNOFiles();
-        db.update(mb, files);
+    public void unregister() {
+        sb.remove(this);
     }
 }

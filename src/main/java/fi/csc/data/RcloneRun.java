@@ -8,18 +8,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.concurrent.Executors;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
 import static fi.csc.data.model.RcloneConfig.ASETUKSET;
-
 
 public class RcloneRun {
 
@@ -87,28 +80,6 @@ public class RcloneRun {
     }
 
     /**
-     * obscure token. rclone has nice security feature to not use clear tokens but somehow obfuscated
-     * Just run a rclone command obscure
-     *
-     * @param token String Token, password to access nextcloud
-     * @return String obfuscated token
-     */
-    public String obfuscate(String token) {
-        try {
-            Process process = Runtime.getRuntime().exec(RCLONE + "obscure "+token);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            int exitCode = process.waitFor();
-            assert exitCode == 0;
-            return reader.readLine();
-           } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return "error in obscure";
-    }
-
-    /**
      * Sekä konfikuraatio että varsinainen rclone komennon suoritus
      *
      * @param komento String[] komento ja kaikki optiot, koko komeus suoritetetaan
@@ -130,15 +101,20 @@ public class RcloneRun {
             if (null != ss) {
                 ss.setStreamsHandling(streamGobbler);
             }
-            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            //Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
             int kesto = (int) ((System.currentTimeMillis()-alkuaika)/1000L);
+            streamGobbler.update();
             assert exitCode == 0;
-            return  new Status(exitCode, streamGobbler.getMB(),
+            Status s =  new Status(exitCode, streamGobbler.getMB(),
                                 kesto,
                                 streamGobbler.getNOFiles(),
                     streamGobbler.getErrors());
+            if (null != ss) {
+                ss.unregister(); //Seurannan poisto
+            }
+            return s;
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("IOException when running rclone:" + e.getMessage());

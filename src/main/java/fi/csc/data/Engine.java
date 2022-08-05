@@ -17,6 +17,8 @@ public class Engine implements Runnable{
     AgroalDataSource defaultDataSource;
     AgroalDataSource write;
 
+    SeurantaBean sb;
+
     public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write) {
         this.id = id;
         this.log = log;
@@ -67,7 +69,7 @@ public class Engine implements Runnable{
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
                     destination.username = rs.getString(14);
-                    Seurantasäie ss = new Seurantasäie(db);
+                    Seurantasäie ss = new Seurantasäie(db, sb);
                     s = rr.copy(source, destination, sourceToken, destinationToken, ss);
                     log.info("Kesto: "+s.kesto);
                     virhetulostus("Copy: ", s.errors);

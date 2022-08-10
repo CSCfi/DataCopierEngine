@@ -15,7 +15,7 @@ public class Base {
     final static String SELECT = "SELECT source.PalveluID, source.Protokolla, source.omistaja, source.polku," +
             " auths.username, auths.accessKey, auths.secretKey, auths.projectID, auths.token," +
             " destination.PalveluID, destination.Protokolla, destination.omistaja,  destination.polku," +
-            " ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token, r.copyid, auths.authid, ad.authid " +
+            " ad.username, ad.accessKey, ad.secretKey, ad.projectID, ad.token, r.copyid, r.requester, auths.authid, ad.authid " +
             "FROM request r, palvelu source, palvelu destination, auth auths, auth ad " +
             "WHERE r.source = source.caseid AND r.destination = destination.caseid AND " +
             "source.Auth = auths.authid AND destination.Auth = ad.authid AND r.status IS NULL AND r.copyid=?";

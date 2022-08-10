@@ -8,25 +8,26 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
-import static fi.csc.data.RcloneRun.KAIKKI;
 import static fi.csc.data.RcloneRun.KAUTTA;
-import static fi.csc.data.RcloneRun.MB;
 import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
 
-public class StreamsHandling {
+public class StreamsHandling implements Runnable {
 
     static final double KILO = 1000;
+    static final String MB  = "Transferred:";
+    static final String PROSENTTI = "%";
     Logger log;
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
     List<String> previousl;
-    String input;
+    String input; //rclone output!
     StringBuilder sberrors = new StringBuilder();
     Double megatavut;
     int tiedostojenlukumäärä = -1;
@@ -35,22 +36,25 @@ public class StreamsHandling {
         this.binputStream = new BufferedInputStream(inputStream);
         this.berrorStream = new BufferedInputStream(errorStream);
     }
-/*
+
     @Override
     public void run() {
-        list = new BufferedReader(new InputStreamReader(inputStream)).lines()
-                .collect(Collectors.toList());
-        new BufferedReader(new InputStreamReader(errorStream))
-                .lines().forEach(s -> sberrors.append(s));
+        try {
+            //binputStream.transferTo(System.out);
+            log.debug(new String(berrorStream.readAllBytes(),StandardCharsets.UTF_8));
+            log.info("Config success");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
 
     }
-*/
+
     public int update() {
         try {
             int available = binputStream.available();
             byte[] saatavilla = binputStream.readNBytes(available);
             input = new String(saatavilla, StandardCharsets.UTF_8);
-            sberrors.append(berrorStream.readNBytes(berrorStream.available()));
+            sberrors.append(new String(berrorStream.readNBytes(berrorStream.available()), StandardCharsets.UTF_8));
             return available;
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -64,8 +68,10 @@ public class StreamsHandling {
 
     public int getMB() {
             if (null != input) {
-                OptionalInt d = input.lines()
+                OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
                         .filter(s -> s.contains(MB))
+                        .filter(s -> !s.contains("0 B"))
+                        .filter(s -> !s.contains("0%"))
                         .mapToInt(s -> laskeMB(s)).max();
                 if (d.isPresent())
                     return d.getAsInt();
@@ -84,10 +90,10 @@ public class StreamsHandling {
      */
     private int laskeMB(String s) {
         System.out.println("Lasketaan MB:"+ s);
-        String ss = s.substring(MB.length() + 1, s.lastIndexOf(KAIKKI));
+        String ss = s.substring(MB.length() + 1, s.lastIndexOf(PROSENTTI));
         String[] identtiset = ss.split(KAUTTA);
-        if (identtiset.length > 2) {
-            String[] lukuyksikkö = identtiset[2].split(VÄLILYÖNTI);
+        if (identtiset.length > 1) {
+            String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
             if (lukuyksikkö.length > 8) {
                 int i = 6;
                 while (lukuyksikkö[i].isEmpty())

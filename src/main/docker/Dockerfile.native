@@ -23,7 +23,7 @@ RUN chown 1001 /work \
     && touch /work/.rclone.conf \
     && chown 1001 /work/.rclone.conf
 COPY --chown=1001:root target/*-runner /work/application
-COPY --chown=1001:root bin/rclone /work/rclone
+COPY --chown=1001:root /usr/bin/rclone /work/rclone
 
 USER 1001
 

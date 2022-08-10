@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.io.InputStreamReader;
+import java.util.concurrent.Executors;
 
 import static fi.csc.data.Const.ALLASPUBLIC;
 import static fi.csc.data.Const.IDASTAGING;
@@ -25,8 +26,7 @@ public class RcloneRun {
     static final String KAUTTA = "/";
     static final String VÄLILYÖNTI = " ";
     static final String AIKA = "Elapsed time:";
-    static final String MB  = "Transferred:";
-    static final String KAIKKI = "100%";
+
     int copyid;
 
     public RcloneRun(int id) {
@@ -54,7 +54,7 @@ public class RcloneRun {
      * @param rc RcloneConfig source or destination
      * @return int status 0 is success
      */
-    public Status config(RcloneConfig rc, String token) {
+    public int config(RcloneConfig rc, String token) {
 
         ArrayList<String> komento = new ArrayList<>(7);
         komento.add(RCLONE);
@@ -76,7 +76,13 @@ public class RcloneRun {
             komento.add(ASETUKSET[1]);
             komento.add(ASETUKSET[2]);
         }
-        return realRun(komento.toArray(new String[komento.size()]), null);
+         try {
+           Process process = Runtime.getRuntime().exec(komento.toArray(new String[komento.size()]), RCLONEHOME);
+           return process.waitFor();
+       } catch (IOException | InterruptedException e) {
+           e.printStackTrace();
+           return -1;
+       }
     }
 
     /**
@@ -100,8 +106,9 @@ public class RcloneRun {
                     process.getErrorStream());
             if (null != ss) {
                 ss.setStreamsHandling(streamGobbler);
-            }
-            //Executors.newSingleThreadExecutor().submit(streamGobbler);
+                ss.updataStatus();
+            } else
+                Executors.newSingleThreadExecutor().submit(streamGobbler);
 
             int exitCode = process.waitFor();
             int kesto = (int) ((System.currentTimeMillis()-alkuaika)/1000L);

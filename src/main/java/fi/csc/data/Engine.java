@@ -1,5 +1,6 @@
 package fi.csc.data;
 
+import fi.csc.data.model.ExchangeObject;
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
 import io.agroal.api.AgroalDataSource;
@@ -16,14 +17,15 @@ public class Engine implements Runnable{
     Logger log;
     AgroalDataSource defaultDataSource;
     AgroalDataSource write;
+    SeurantaBean sb = new SeurantaBean();
+    ExchangeObject eo;
 
-    SeurantaBean sb;
-
-    public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write) {
+    public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write, ExchangeObject eo) {
         this.id = id;
         this.log = log;
         this.defaultDataSource = defaultDataSource;
         this.write = write;
+        this.eo = eo;
     }
 
     @Override
@@ -41,8 +43,8 @@ public class Engine implements Runnable{
                 log.info("Nothing to do, rs was null");
             } else {
                 if (rs.first()) {
+                    eo.lähetäTunnus(rs.getString(20));
                     int copyid = rs.getInt(19);
-                    System.out.println("rs.First!");
                     db.start(c2, copyid);
                     RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
                     RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
@@ -55,12 +57,14 @@ public class Engine implements Runnable{
                     if (null == sourceToken) {
                         sourceToken = source.access_key_id;
                     }
-                    rr.config(source, sourceToken);
+                    if (rr.config(source, sourceToken) < 0) {
+                        log.error("Source config failed");
+                    }
                     if (null == destinationToken) {
                         destinationToken = destination.access_key_id;
                     }
-                    s = rr.config(destination, destinationToken);
-                    virhetulostus("Config: ", s.errors);
+                    if (rr.config(destination, destinationToken) < 0)
+                        log.error("Destination config failed");
                     source.secret_access_key = rs.getString(7);
                     destination.secret_access_key = rs.getString(16);
                     source.omistaja = rs.getString(3);
@@ -74,14 +78,15 @@ public class Engine implements Runnable{
                     log.info("Kesto: "+s.kesto);
                     virhetulostus("Copy: ", s.errors);
                     db.write(c2, s, copyid);
-                    db.delete(c2, rs.getInt(20));
                     db.delete(c2, rs.getInt(21));
+                    db.delete(c2, rs.getInt(22));
                     c2.close();
                     Statement stmt = rs.getStatement();
                     rs.close();
                     stmt.close();
                     rr.delete(source);
                     rr.delete(destination);
+                    log.info("Sähköposti: "+ eo.getEmailaddress());
                 } else { // rs.first was NOT
                     log.error("There was NO rs.first()");
                 }

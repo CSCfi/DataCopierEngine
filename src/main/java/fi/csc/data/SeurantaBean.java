@@ -2,11 +2,12 @@ package fi.csc.data;
 
 import io.quarkus.scheduler.Scheduled;
 import javax.enterprise.context.ApplicationScoped;
+import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
 public class SeurantaBean {
-    List<Seurantasäie> ssl;
+    List<Seurantasäie> ssl = new ArrayList<>();
 
     public void register(Seurantasäie ss)  {
         ssl.add(ss);

@@ -1,5 +1,6 @@
 package fi.csc.data;
 
+import fi.csc.data.model.ExchangeObject;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -11,6 +12,8 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Path("/v1/run/")
 public class Main {
@@ -21,7 +24,8 @@ public class Main {
 
     @ConfigProperty(name = "dcengine.apikey")
     String apikey;
-
+    @ConfigProperty(name = "ldap.key")
+    String ldapkey;
 
     @Inject
     Logger log;
@@ -48,10 +52,19 @@ public class Main {
         } catch (NumberFormatException e) {
             return Response.status(400, "int id missing or error: " + e.getMessage()).build();
         }
-        Engine e = new Engine(copyid, log, defaultDataSource, write);
+        long alku = System.nanoTime();
+        ExchangeObject eo = new ExchangeObject();
+        Engine e = new Engine(copyid, log, defaultDataSource, write, eo);
+        log.info("Create two objects: " + (System.nanoTime() -alku));
         Thread t1 = new Thread(e);
         t1.start();
-
+        // Tämä siis ajetaan rinnakkain edellä käynnistetyn säikeeen kanssa!!!
+        LDAP ldap = new LDAP(ldapkey);
+        log.info("Before sync: " + (System.nanoTime() - alku));
+        eo.setSähköposti(ldap.emailquery(eo.getTunnus())); //Tässä synkronoidaan
+        Thread t2 = new Thread(eo);
+        t2.start(); //säikeet jäävät seurustelemaan, mutta tämä pääohjelma kuittaa ja poistuu
+        log.info("After sync: " + (System.nanoTime() - alku));
         return Response.ok("Pyyntö lähetetty\n").build();
     }
 }

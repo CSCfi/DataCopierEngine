@@ -1,8 +1,8 @@
 package fi.csc.data;
 
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 import org.jboss.logging.Logger;
 
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Scanner;
+import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 
 import static fi.csc.data.RcloneRun.KAUTTA;
@@ -21,9 +23,8 @@ import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
 public class StreamsHandling implements Runnable {
 
     static final double KILO = 1000;
-    static final String MB  = "Transferred:";
+    static final String MB  = "-Transferred:";
     static final String PROSENTTI = "%";
-    Logger log;
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
     List<String> previousl;
@@ -41,10 +42,10 @@ public class StreamsHandling implements Runnable {
     public void run() {
         try {
             //binputStream.transferTo(System.out);
-            log.debug(new String(berrorStream.readAllBytes(),StandardCharsets.UTF_8));
-            log.info("Config success");
+            System.out.println(new String(berrorStream.readAllBytes(),StandardCharsets.UTF_8));
+            System.out.println("Config success");
         } catch (IOException e) {
-            log.error(e.getMessage());
+            System.err.println(e.getMessage());
         }
 
     }
@@ -54,10 +55,11 @@ public class StreamsHandling implements Runnable {
             int available = binputStream.available();
             byte[] saatavilla = binputStream.readNBytes(available);
             input = new String(saatavilla, StandardCharsets.UTF_8);
+            //System.out.println("input was: "+input);
             sberrors.append(new String(berrorStream.readNBytes(berrorStream.available()), StandardCharsets.UTF_8));
             return available;
         } catch (IOException e) {
-            log.error(e.getMessage());
+            System.err.println(e.getMessage());
         }
          return -1;
     }
@@ -70,8 +72,7 @@ public class StreamsHandling implements Runnable {
             if (null != input) {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
                         .filter(s -> s.contains(MB))
-                        .filter(s -> !s.contains("0 B"))
-                        .filter(s -> !s.contains("0%"))
+                        .filter(s -> !s.contains(" 0%"))
                         .mapToInt(s -> laskeMB(s)).max();
                 if (d.isPresent())
                     return d.getAsInt();
@@ -90,12 +91,15 @@ public class StreamsHandling implements Runnable {
      */
     private int laskeMB(String s) {
         System.out.println("Lasketaan MB:"+ s);
-        String ss = s.substring(MB.length() + 1, s.lastIndexOf(PROSENTTI));
+        /*Scanner sc = new Scanner(s);
+        sc.findInLine(" \\*.+-Transferred:\\s+[0-9]*\\.[0-9]+ [kMGT].+");
+        MatchResult result = sc.match();*/
+       String ss = s.substring(s.indexOf(MB)+MB.length() + 1, s.lastIndexOf(PROSENTTI));
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
             String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
-            if (lukuyksikkö.length > 8) {
-                int i = 6;
+            if (lukuyksikkö.length > 3) {
+                int i = 3;
                 while (lukuyksikkö[i].isEmpty())
                     i++;
                 double luku = Double.parseDouble(lukuyksikkö[i].trim());
@@ -103,7 +107,7 @@ public class StreamsHandling implements Runnable {
             } else {
                 System.out.println("lukuyksikkö.lenght was " + lukuyksikkö.length);
             }
-        } else {
+        } else { //tänne ei pitäisi koskaan päätyä
             final int TOINEN = 1;
             String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
             System.out.println(lkm);

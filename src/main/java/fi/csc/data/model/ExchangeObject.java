@@ -3,6 +3,9 @@ package fi.csc.data.model;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Säikeiden välinen keskustelu
+ */
 public class ExchangeObject implements Runnable {
     BlockingQueue<String> tunnus = new LinkedBlockingQueue<>();
     BlockingQueue<String> sähköposti = new LinkedBlockingQueue<>();
@@ -24,10 +27,17 @@ public class ExchangeObject implements Runnable {
         }
     }
 
+    /**
+     * Tämä on tavallisen setter, joka EI jää odottomaan
+     * @param emailaddress String LDAPista löydetty sähköpostiosoite, joka tarkoitus lähettää enginelle
+     */
     public void setSähköposti(String emailaddress) {
         this.emailaddress = emailaddress;
     }
 
+    /**
+     * Tämä ajetaan siis omassa säikeessään, jotta
+     */
     @Override
     public void run() {
         try {

@@ -4,8 +4,9 @@ import fi.csc.data.model.ExchangeObject;
 import fi.csc.data.model.RcloneConfig;
 import fi.csc.data.model.Status;
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.mailer.Mail;
 import org.jboss.logging.Logger;
-
+import io.quarkus.mailer.Mailer;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,13 +20,16 @@ public class Engine implements Runnable{
     AgroalDataSource write;
     SeurantaBean sb = new SeurantaBean();
     ExchangeObject eo;
+    Mailer mailer;
 
-    public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write, ExchangeObject eo) {
+    public Engine(int id, Logger log, AgroalDataSource defaultDataSource, AgroalDataSource write,
+                  ExchangeObject eo, Mailer mailer) {
         this.id = id;
         this.log = log;
         this.defaultDataSource = defaultDataSource;
         this.write = write;
         this.eo = eo;
+        this.mailer = mailer;
     }
 
     @Override
@@ -86,7 +90,12 @@ public class Engine implements Runnable{
                     stmt.close();
                     rr.delete(source);
                     rr.delete(destination);
-                    log.info("Sähköposti: "+ eo.getEmailaddress());
+                    String sähköpostiosoite = eo.getEmailaddress();
+                    // works only ibn rahti
+                    /*mailer.send(Mail.withText(sähköpostiosoite,
+                            "Tiedostokopiointisi "+source.type + " onnistui",
+                    "Your file copy to " +  destination.type + "succeeded in" + s.kesto +"s.")
+                            .setFrom(sähköpostiosoite));*/
                 } else { // rs.first was NOT
                     log.error("There was NO rs.first()");
                 }

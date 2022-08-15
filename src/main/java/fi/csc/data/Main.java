@@ -12,8 +12,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import io.quarkus.mailer.Mailer;
 
 @Path("/v1/run/")
 public class Main {
@@ -37,6 +36,7 @@ public class Main {
     @DataSource("write")
     AgroalDataSource write;
 
+    @Inject Mailer mailer;
 
     @GET
     @Path("{id}")
@@ -54,7 +54,7 @@ public class Main {
         }
         long alku = System.nanoTime();
         ExchangeObject eo = new ExchangeObject();
-        Engine e = new Engine(copyid, log, defaultDataSource, write, eo);
+        Engine e = new Engine(copyid, log, defaultDataSource, write, eo, mailer);
         log.info("Create two objects: " + (System.nanoTime() -alku));
         Thread t1 = new Thread(e);
         t1.start();

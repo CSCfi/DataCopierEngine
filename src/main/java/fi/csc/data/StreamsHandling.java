@@ -23,7 +23,8 @@ import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
 public class StreamsHandling implements Runnable {
 
     static final double KILO = 1000;
-    static final String MB  = "-Transferred:";
+    static final String TRANSFERRRED = "Transferred:";
+    static final String MB  = "-"+TRANSFERRRED;
     static final String PROSENTTI = "%";
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
@@ -68,6 +69,10 @@ public class StreamsHandling implements Runnable {
         return sberrors.toString();
     }
 
+    /**
+     * Käy läpi rclonen tulostuksen ja selvitää suurimman tämän hetkisen MB määrän
+     * @return int MB
+     */
     public int getMB() {
             if (null != input) {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
@@ -91,22 +96,15 @@ public class StreamsHandling implements Runnable {
      */
     private int laskeMB(String s) {
         System.out.println("Lasketaan MB:"+ s);
-        /*Scanner sc = new Scanner(s);
-        sc.findInLine(" \\*.+-Transferred:\\s+[0-9]*\\.[0-9]+ [kMGT].+");
-        MatchResult result = sc.match();*/
-       String ss = s.substring(s.indexOf(MB)+MB.length() + 1, s.lastIndexOf(PROSENTTI));
+        String ss = s.substring(s.indexOf(MB)+MB.length() + 1, s.lastIndexOf(PROSENTTI));
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
-            String[] lukuyksikkö = identtiset[0].split(VÄLILYÖNTI);
-            if (lukuyksikkö.length > 3) {
-                int i = 3;
-                while (lukuyksikkö[i].isEmpty())
-                    i++;
-                double luku = Double.parseDouble(lukuyksikkö[i].trim());
-                return toMB(luku, lukuyksikkö[i+1]); //Tämä on oikea tulos
-            } else {
-                System.out.println("lukuyksikkö.lenght was " + lukuyksikkö.length);
-            }
+            Scanner sc = new Scanner(identtiset[0]);
+            sc.findInLine("\\s+([0-9]*\\.[0-9]+) ([kMGT])iB\\s");
+            MatchResult result = sc.match();
+            double luku = Double.parseDouble(result.group(1));
+            return toMB(luku, result.group(2)); //Tämä on oikea tulos
+
         } else { //tänne ei pitäisi koskaan päätyä
             final int TOINEN = 1;
             String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
@@ -141,9 +139,48 @@ public class StreamsHandling implements Runnable {
         return mb;
     }
 
+    /**
+     * Lukee rclonen tulostuksen ja valitsee "Transferred:            1 / 1, 100% rivin" kaltaisen rivin,
+     * jonka perusteella laskee siirrettyjen tiedojen määrän
+     *
+     * @return int siirrettyjen tiedojen lukumäärä
+     */
     public int getNOFiles() {
-        return tiedostojenlukumäärä;
+          if (null != input) {
+                OptionalInt d = input.lines()
+                        .filter(s -> s.contains(TRANSFERRRED))
+                        .filter(s -> !s.contains("ETA"))
+                        .filter(s -> !s.contains(" 0%"))
+                        .mapToInt(s -> laskeKPL(s)).max();
+                if (d.isPresent())
+                    return d.getAsInt();
+                else {
+                    System.out.println("Tiedostojen lukumäärästä ei tolkkua!");
+                    return tiedostojenlukumäärä;
+                }
+            }
+            System.out.println("Tiedostojenlukumäärän laskemisen input oli tyhjä.");
+            return 0; //ehkä erillinen arvo en tiedälle
     }
+
+    /**
+     * Parsii "Transferred:            1 / 1, 100% rivin" ja yrittää kaivaa ensimmäisen numeron
+     * @param s String ylläolevan kaltainen rivi rclonen tulostuksesta
+     * @return int Siirrettyjen tiedostojen lukumäärä (tai -1 jos tuli ongelmia)
+     */
+    private int laskeKPL(String s) {
+        try {
+            Scanner sc = new Scanner(s);
+            sc.findInLine(TRANSFERRRED + "\\s+([0-9]+) / [0-9]+, [0-9]+%");
+            MatchResult result = sc.match();
+            return Integer.parseInt(result.group(1));
+        } catch (IllegalStateException ise) {
+            System.err.println(ise.getMessage()+s);
+            return -1;
+        }
+    }
+
+
 }
 
 

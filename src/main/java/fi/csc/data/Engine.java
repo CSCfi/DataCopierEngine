@@ -91,11 +91,13 @@ public class Engine implements Runnable{
                     rr.delete(source);
                     rr.delete(destination);
                     String sähköpostiosoite = eo.getEmailaddress();
-                    // works only ibn rahti
-                    /*mailer.send(Mail.withText(sähköpostiosoite,
-                            "Tiedostokopiointisi "+source.type + " onnistui",
-                    "Your file copy to " +  destination.type + "succeeded in" + s.kesto +"s.")
-                            .setFrom(sähköpostiosoite));*/
+                    if (1 == rs.getInt(23)) {
+                        // works only ibn rahti
+                        mailer.send(Mail.withText(sähköpostiosoite,
+                                        "Tiedostokopiointisi " + source.type + " onnistui",
+                                        "Your file copy to " + destination.type + "succeeded in" + s.kesto + "s.")
+                                .setFrom(sähköpostiosoite));
+                    }
                 } else { // rs.first was NOT
                     log.error("There was NO rs.first()");
                 }

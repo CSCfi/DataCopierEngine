@@ -78,7 +78,7 @@ public class StreamsHandling implements Runnable {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
                         .filter(s -> s.contains(MB))
                         .filter(s -> !s.contains(" 0%"))
-                        .mapToInt(s -> laskeMB(s)).max();
+                        .mapToInt(this::laskeMB).max();
                 if (d.isPresent())
                     return d.getAsInt();
                 else if (null != megatavut)
@@ -100,21 +100,10 @@ public class StreamsHandling implements Runnable {
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
             Scanner sc = new Scanner(identtiset[0]);
-            sc.findInLine("\\s+([0-9]*\\.[0-9]+) ([kMGT])iB\\s");
+            sc.findInLine("\\s+([0-9]*\\.?[0-9]*) ([kMGT])iB\\s");
             MatchResult result = sc.match();
             double luku = Double.parseDouble(result.group(1));
             return toMB(luku, result.group(2)); //Tämä on oikea tulos
-
-        } else { //tänne ei pitäisi koskaan päätyä
-            final int TOINEN = 1;
-            String lkm = identtiset[TOINEN].trim().substring(0,identtiset[TOINEN].length()-3);
-            System.out.println(lkm);
-            if (lkm.contains("B")) {
-                String[] lukuyksikkö = lkm.split(VÄLILYÖNTI);
-                double luku = Double.parseDouble(lukuyksikkö[0].trim());
-                return toMB(luku, lukuyksikkö[1]);
-            } else
-                tiedostojenlukumäärä = Integer.parseInt(lkm);
         }
         return 0;
     }
@@ -151,7 +140,7 @@ public class StreamsHandling implements Runnable {
                         .filter(s -> s.contains(TRANSFERRRED))
                         .filter(s -> !s.contains("ETA"))
                         .filter(s -> !s.contains(" 0%"))
-                        .mapToInt(s -> laskeKPL(s)).max();
+                        .mapToInt(this::laskeKPL).max();
                 if (d.isPresent())
                     return d.getAsInt();
                 else {

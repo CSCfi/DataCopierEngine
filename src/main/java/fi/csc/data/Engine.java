@@ -14,7 +14,7 @@ import java.sql.Statement;
 
 
 public class Engine implements Runnable{
-    private int id;
+    private final int id;
     Logger log;
     AgroalDataSource defaultDataSource;
     AgroalDataSource write;
@@ -50,8 +50,8 @@ public class Engine implements Runnable{
                     eo.lähetäTunnus(rs.getString(20));
                     int copyid = rs.getInt(19);
                     db.start(c2, copyid);
-                    RcloneConfig source = (RcloneConfig) Const.palveluht.get(rs.getInt(1));
-                    RcloneConfig destination = (RcloneConfig) Const.palveluht.get(rs.getInt(10));
+                    RcloneConfig source =  Const.palveluht.get(rs.getInt(1));
+                    RcloneConfig destination = Const.palveluht.get(rs.getInt(10));
                     log.info("Source: " + source.type + " Destination: " + destination.type);
                     RcloneRun rr = new RcloneRun(copyid);
                     String sourceToken = rs.getString(9);
@@ -86,8 +86,6 @@ public class Engine implements Runnable{
                     db.delete(c2, rs.getInt(22));
                     c2.close();
                     Statement stmt = rs.getStatement();
-                    rs.close();
-                    stmt.close();
                     rr.delete(source);
                     rr.delete(destination);
                     String sähköpostiosoite = eo.getEmailaddress();
@@ -98,6 +96,8 @@ public class Engine implements Runnable{
                                         "Your file copy to " + destination.type + "succeeded in" + s.kesto + "s.")
                                 .setFrom(sähköpostiosoite));
                     }
+                    rs.close();
+                    stmt.close();
                 } else { // rs.first was NOT
                     log.error("There was NO rs.first()");
                 }

@@ -14,6 +14,8 @@ import java.sql.Statement;
 
 
 public class Engine implements Runnable{
+
+    static final String[][] SÄHKÖPOSTINSISÄLTÖ = {{"Onnistui", "succeeded"},{"Epäonnistui", "failed"}};
     private final int id;
     Logger log;
     AgroalDataSource defaultDataSource;
@@ -89,11 +91,26 @@ public class Engine implements Runnable{
                     rr.delete(source);
                     rr.delete(destination);
                     String sähköpostiosoite = eo.getEmailaddress();
+                    log.info("Sähköpostiosoite is "+sähköpostiosoite);
                     if (1 == rs.getInt(23)) {
                         // works only ibn rahti
+                        int success = s.exitCode;
+                        if (success > 1 || success < 0) {
+                            success = 1; //Failed
+                        }
+                        StringBuilder sb = new StringBuilder("Your file copy to ");
+                        sb.append(destination.type);
+                        sb.append(SÄHKÖPOSTINSISÄLTÖ[success][1]);
+                        sb.append(" in ");
+                        sb.append(s.kesto);
+                        sb.append("s. ");
+                        if (0 != success) { //Failed
+                            sb.append("The error code was ");
+                            sb.append(s.exitCode);
+                        }
                         mailer.send(Mail.withText(sähköpostiosoite,
-                                        "Tiedostokopiointisi " + source.type + " onnistui",
-                                        "Your file copy to " + destination.type + "succeeded in" + s.kesto + "s.")
+                                        "Tiedostokopiointisi " + source.type + SÄHKÖPOSTINSISÄLTÖ[success][0],
+                                        sb.toString())
                                 .setFrom(sähköpostiosoite));
                     }
                     rs.close();

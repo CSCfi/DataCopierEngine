@@ -27,4 +27,4 @@ COPY --chown=1001:root bin/rclone /work/rclone
 
 USER 1001
 
-CMD ["./application"]
+CMD ["./application", "--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED", "-Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true"]

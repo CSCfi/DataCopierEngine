@@ -16,6 +16,7 @@ public class Seurantasäie {
     }
 
     public void updataStatus(){
+        System.out.println("Updating...");
         int avail = sh.update();
         if (avail > 0) {
             int mb = sh.getMB();

@@ -91,7 +91,7 @@ public class Engine implements Runnable{
                     rr.delete(source);
                     rr.delete(destination);
                     String sähköpostiosoite = eo.getEmailaddress();
-                    log.info("Sähköpostiosoite is "+sähköpostiosoite);
+                    //log.info("Sähköpostiosoite is "+sähköpostiosoite);
                     if (1 == rs.getInt(23)) {
                         // works only ibn rahti
                         int success = s.exitCode;

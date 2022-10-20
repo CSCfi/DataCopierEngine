@@ -100,6 +100,7 @@ public class Engine implements Runnable{
                         }
                         StringBuilder sb = new StringBuilder("Your file copy to ");
                         sb.append(destination.type);
+                        sb.append(" ");
                         sb.append(SÄHKÖPOSTINSISÄLTÖ[success][1]);
                         sb.append(" in ");
                         sb.append(s.kesto);
@@ -109,7 +110,7 @@ public class Engine implements Runnable{
                             sb.append(s.exitCode);
                         }
                         mailer.send(Mail.withText(sähköpostiosoite,
-                                        "Tiedostokopiointisi " + source.type + SÄHKÖPOSTINSISÄLTÖ[success][0],
+                                        "Tiedostokopiointisi " + source.type + ":sta " +SÄHKÖPOSTINSISÄLTÖ[success][0],
                                         sb.toString())
                                 .setFrom(sähköpostiosoite));
                     }

@@ -18,7 +18,7 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 
 import static fi.csc.data.RcloneRun.KAUTTA;
-import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
+
 
 public class StreamsHandling implements Runnable {
 

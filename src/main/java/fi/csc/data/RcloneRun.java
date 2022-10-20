@@ -108,8 +108,10 @@ public class RcloneRun {
             if (null != ss) {
                 ss.setStreamsHandling(streamGobbler);
                 ss.updataStatus();
+                System.out.println("Seurantasäie set");
             } else
                 Executors.newSingleThreadExecutor().submit(streamGobbler);
+
 
             int exitCode = process.waitFor();
             int kesto = (int) ((System.currentTimeMillis()-alkuaika)/1000L);

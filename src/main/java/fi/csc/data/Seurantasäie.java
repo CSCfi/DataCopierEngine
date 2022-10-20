@@ -13,6 +13,7 @@ public class Seurantasäie {
     public void setStreamsHandling(StreamsHandling streamGobbler) {
         this.sh = streamGobbler;
         sb.register(this);
+        System.out.println("Registered.");
     }
 
     public void updataStatus(){

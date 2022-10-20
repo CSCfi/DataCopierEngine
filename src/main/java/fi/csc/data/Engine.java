@@ -11,7 +11,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import static fi.csc.data.RcloneRun.VÄLILYÖNTI;
 
 public class Engine implements Runnable{
 
@@ -100,7 +100,7 @@ public class Engine implements Runnable{
                         }
                         StringBuilder sb = new StringBuilder("Your file copy to ");
                         sb.append(destination.type);
-                        sb.append(" ");
+                        sb.append(VÄLILYÖNTI);
                         sb.append(SÄHKÖPOSTINSISÄLTÖ[success][1]);
                         sb.append(" in ");
                         sb.append(s.kesto);

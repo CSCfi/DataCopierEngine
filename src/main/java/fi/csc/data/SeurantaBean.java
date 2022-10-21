@@ -12,7 +12,9 @@ public class SeurantaBean {
     List<Seurantasäie> ssl = new ArrayList<>();
 
     public void register(Seurantasäie ss)  {
+        System.out.println("Seurantasäiettä asetetaan");
         ssl.add(ss);
+        if (ssl.isEmpty()) System.out.println("Seurantasäieasetus epäonnistui: "+ ssl.size());
     }
 
     public void remove(Seurantasäie ss) {

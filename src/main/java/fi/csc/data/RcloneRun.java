@@ -123,6 +123,7 @@ public class RcloneRun {
                     streamGobbler.getErrors());
             if (null != ss) {
                 ss.unregister(); //Seurannan poisto
+                System.out.println("Seurantasäie poistettu");
             }
             return s;
         } catch (IOException e) {

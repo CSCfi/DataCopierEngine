@@ -21,7 +21,9 @@ public class SeurantaBean {
 
     @Scheduled(every=AJASTUS)
     void increment() {
-        if ((null != ssl) && !ssl.isEmpty()) {
+        if (ssl.isEmpty())
+            System.out.println("ssl was empty");
+        else {
             System.out.println(AJASTUS);
             ssl.forEach(Seurantasäie::updataStatus);
         }

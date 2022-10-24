@@ -9,25 +9,33 @@ public class SeurantaBean {
 
     static final String AJASTUS = "10s";
 
-    List<Seurantasäie> ssl = new ArrayList<>();
+    Seurantasäie ss;
+    ArrayList<Seurantasäie> ssl = new ArrayList<>();
 
     public void register(Seurantasäie ss)  {
         System.out.println("Seurantasäiettä asetetaan");
-        ssl.add(ss);
-        if (ssl.isEmpty()) System.out.println("Seurantasäieasetus epäonnistui: "+ ssl.size());
+        this.ss = ss;
+        //if (ssl.isEmpty()) System.out.println("Seurantasäieasetus epäonnistui: "+ ssl.size());
     }
 
     public void remove(Seurantasäie ss) {
+        System.out.println("Seurantasäie poistetiin");
         ssl.remove(ss);
     }
 
     @Scheduled(every=AJASTUS)
     void increment() {
-        if (ssl.isEmpty())
-            System.out.println("ssl was empty");
+        if ( null == ss)
+            System.out.println("ss was null");
         else {
             System.out.println(AJASTUS);
-            ssl.forEach(Seurantasäie::updataStatus);
+            ss.updataStatus();
+            //ssl.forEach(Seurantasäie::updataStatus);
         }
     }
+
+    public ArrayList<Seurantasäie> getSsl() {
+        return ssl;
+    }
+
 }

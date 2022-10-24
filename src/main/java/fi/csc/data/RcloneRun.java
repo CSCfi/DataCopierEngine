@@ -107,6 +107,7 @@ public class RcloneRun {
                     process.getErrorStream());
             if (null != ss) {
                 ss.setStreamsHandling(streamGobbler);
+                ss.getSb().getSsl().add(ss);
                 ss.getSb().register(ss);
                 ss.updataStatus();
                 System.out.println("Seurantasäie set");

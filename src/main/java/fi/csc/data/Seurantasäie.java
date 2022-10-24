@@ -12,8 +12,7 @@ public class Seurantasäie {
 
     public void setStreamsHandling(StreamsHandling streamGobbler) {
         this.sh = streamGobbler;
-        sb.register(this);
-        System.out.println("Registered.");
+        //sb.register(this);
     }
 
     public void updataStatus(){
@@ -29,4 +28,7 @@ public class Seurantasäie {
     public void unregister() {
         sb.remove(this);
     }
+
+    public SeurantaBean getSb() {return sb;}
+
 }

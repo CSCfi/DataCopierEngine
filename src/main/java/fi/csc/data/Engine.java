@@ -20,7 +20,6 @@ public class Engine implements Runnable{
     Logger log;
     AgroalDataSource defaultDataSource;
     AgroalDataSource write;
-    SeurantaBean sb = new SeurantaBean();
     ExchangeObject eo;
     Mailer mailer;
 
@@ -79,7 +78,7 @@ public class Engine implements Runnable{
                     destination.polku = rs.getString(13);
                     source.username = rs.getString(5);
                     destination.username = rs.getString(14);
-                    Seurantasäie ss = new Seurantasäie(db, sb);
+                    Seurantasäie ss = new Seurantasäie(db);
                     s = rr.copy(source, destination, sourceToken, destinationToken, ss);
                     log.info("Kesto: "+s.kesto);
                     virhetulostus("Copy: ", s.errors);

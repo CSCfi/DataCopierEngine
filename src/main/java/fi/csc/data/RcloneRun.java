@@ -107,9 +107,7 @@ public class RcloneRun {
                     process.getErrorStream());
             if (null != ss) {
                 ss.setStreamsHandling(streamGobbler);
-                ss.getSb().getSsl().add(ss);
-                ss.getSb().register(ss);
-                ss.updataStatus();
+                ss.start();
                 System.out.println("Seurantasäie set");
             } else
                 Executors.newSingleThreadExecutor().submit(streamGobbler);
@@ -124,7 +122,8 @@ public class RcloneRun {
                                 streamGobbler.getNOFiles(),
                     streamGobbler.getErrors());
             if (null != ss) {
-                ss.unregister(); //Seurannan poisto
+                ss.setRunning(false); //Seurannan poisto
+                //ss.updataStatus();
                 System.out.println("Seurantasäie poistettu");
             }
             return s;

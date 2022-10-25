@@ -1,18 +1,34 @@
 package fi.csc.data;
 
-public class Seurantasäie {
+public class Seurantasäie  extends Thread {
     Base db;
-    SeurantaBean sb;
     StreamsHandling sh;
 
-    public Seurantasäie(Base db, SeurantaBean sb) {
+    boolean running;
+
+    public Seurantasäie(Base db) {
         this.db = db;
-        this.sb = sb;
     }
 
+    public void run() {
+        running = true;
+         while (running) {
+             System.out.println(this.getName() + " säie aktiivinen " + System.currentTimeMillis());
+             try {
+                 Thread.sleep(2000);
+                 updataStatus();
+             } catch (InterruptedException e) {
+                System.out.println("InterruptedException: "+e.getMessage());
+             }
+
+         }
+    }
+
+    public void setRunning(boolean b) {
+        this.running = b;
+    }
     public void setStreamsHandling(StreamsHandling streamGobbler) {
         this.sh = streamGobbler;
-        //sb.register(this);
     }
 
     public void updataStatus(){
@@ -24,11 +40,5 @@ public class Seurantasäie {
             db.update(mb, files);
         }
     }
-
-    public void unregister() {
-        sb.remove(this);
-    }
-
-    public SeurantaBean getSb() {return sb;}
 
 }

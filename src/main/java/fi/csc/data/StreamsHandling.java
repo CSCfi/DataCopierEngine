@@ -24,7 +24,6 @@ public class StreamsHandling implements Runnable {
 
     static final double KILO = 1000;
     static final String TRANSFERRRED = "Transferred:";
-    static final String MB  = "-"+TRANSFERRRED;
     static final String PROSENTTI = "%";
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
@@ -76,7 +75,7 @@ public class StreamsHandling implements Runnable {
     public int getMB() {
             if (null != input) {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
-                        .filter(s -> s.contains(MB))
+                        .filter(s -> s.contains(TRANSFERRRED))
                         .filter(s -> !s.contains(" 0%"))
                         .mapToInt(this::laskeMB).max();
                 if (d.isPresent())
@@ -96,7 +95,7 @@ public class StreamsHandling implements Runnable {
      */
     private int laskeMB(String s) {
         System.out.println("Lasketaan MB:"+ s);
-        String ss = s.substring(s.indexOf(MB)+MB.length() + 1, s.lastIndexOf(PROSENTTI));
+        String ss = s.substring(s.indexOf(TRANSFERRRED)+TRANSFERRRED.length() + 1, s.lastIndexOf(PROSENTTI));
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
             Scanner sc = new Scanner(identtiset[0]);

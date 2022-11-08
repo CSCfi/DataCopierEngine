@@ -66,6 +66,7 @@ public class StreamsHandling implements Runnable {
     public int getMB() {
             if (null != input) {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
+                        .filter(s -> s.contains(" *"))
                         .filter(s -> s.contains(TRANSFERRRED))
                         .mapToInt(this::laskeMB).max();
                 if (d.isPresent())
@@ -86,15 +87,16 @@ public class StreamsHandling implements Runnable {
      * @return int MB
      */
     private int laskeMB(String s) {
-        System.out.println("Lasketaan MB:"+ s);
-        String ss = s.substring(s.indexOf(TRANSFERRRED)+TRANSFERRRED.length() + 1, s.lastIndexOf(PROSENTTI));
+        //System.out.println("Lasketaan MB:"+ s);
+        String ss = s.substring(s.indexOf(TRANSFERRRED)+TRANSFERRRED.length() + 1);
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
             Scanner sc = new Scanner(identtiset[0]);
             sc.findInLine("\\s+([0-9]*\\.?[0-9]*) ([kMGT])iB\\s");
             MatchResult result = sc.match();
             double luku = Double.parseDouble(result.group(1));
-            return toMB(luku, result.group(2)); //Tämä on oikea tulos
+            //System.out.println("result.group 2: "+result.group(2)) ;
+            return toMB(luku, result.group(2));
         }
         return 0;
     }
@@ -107,11 +109,11 @@ public class StreamsHandling implements Runnable {
      */
     private int  toMB(Double luku, String lukuyksikkö) {
         int mb;
-        if (lukuyksikkö.contains("KiB"))
+        if (lukuyksikkö.contains("k"))
             mb = (int) Math.round(luku / KILO);
-        else if (lukuyksikkö.contains("GiB"))
+        else if (lukuyksikkö.contains("G"))
             mb = (int) Math.round(luku * KILO);
-        else if (lukuyksikkö.contains("TiB"))
+        else if (lukuyksikkö.contains("T"))
             mb = (int) Math.round(luku * KILO * KILO);
         else
             mb = (int) Math.round(luku);
@@ -129,8 +131,7 @@ public class StreamsHandling implements Runnable {
           if (null != input) {
                 OptionalInt d = input.lines()
                         .filter(s -> s.contains(TRANSFERRRED))
-                        .filter(s -> !s.contains("ETA"))
-                        .filter(s -> !s.contains(" 0%"))
+                        .filter(s -> s.contains("0%"))
                         .mapToInt(this::laskeKPL).max();
                 if (d.isPresent())
                     return d.getAsInt();
@@ -149,13 +150,14 @@ public class StreamsHandling implements Runnable {
      * @return int Siirrettyjen tiedostojen lukumäärä (tai -1 jos tuli ongelmia)
      */
     private int laskeKPL(String s) {
+        //System.out.println("Lasketaan lkm: "+ s);
         try {
             Scanner sc = new Scanner(s);
             sc.findInLine(TRANSFERRRED + "\\s+([0-9]+) / [0-9]+, [0-9]+%");
             MatchResult result = sc.match();
             return Integer.parseInt(result.group(1));
         } catch (IllegalStateException ise) {
-            System.err.println(ise.getMessage()+s);
+            //System.err.println(ise.getMessage()+s);
             return -1;
         }
     }

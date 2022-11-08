@@ -1,24 +1,15 @@
 package fi.csc.data;
 
-import org.jboss.logging.Logger;
-
-import javax.inject.Inject;
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
-import java.util.stream.Collectors;
 
 import static fi.csc.data.RcloneRun.KAUTTA;
-
 
 public class StreamsHandling implements Runnable {
 
@@ -27,7 +18,7 @@ public class StreamsHandling implements Runnable {
     static final String PROSENTTI = "%";
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
-    List<String> previousl;
+    //List<String> previousl;
     String input; //rclone output!
     StringBuilder sberrors = new StringBuilder();
     Double megatavut;
@@ -76,12 +67,13 @@ public class StreamsHandling implements Runnable {
             if (null != input) {
                 OptionalInt d = input.lines()  //voisi ottaa myös "Elapsed time:"
                         .filter(s -> s.contains(TRANSFERRRED))
-                        .filter(s -> !s.contains(" 0%"))
                         .mapToInt(this::laskeMB).max();
                 if (d.isPresent())
                     return d.getAsInt();
                 else if (null != megatavut)
                     return (int) Math.round(megatavut);
+            } else {
+                System.out.println("Input was null: getMB");
             }
             return 0; //ehkä erillinen arvo en tiedälle
     }

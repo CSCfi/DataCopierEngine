@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.OptionalInt;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
@@ -15,10 +14,9 @@ public class StreamsHandling implements Runnable {
 
     static final double KILO = 1000;
     static final String TRANSFERRRED = "Transferred:";
-    static final String PROSENTTI = "%";
+    //static final String PROSENTTI = "%";
     private final BufferedInputStream binputStream;
     private final BufferedInputStream berrorStream;
-    //List<String> previousl;
     String input; //rclone output!
     StringBuilder sberrors = new StringBuilder();
     Double megatavut;
@@ -46,7 +44,7 @@ public class StreamsHandling implements Runnable {
             int available = binputStream.available();
             byte[] saatavilla = binputStream.readNBytes(available);
             input = new String(saatavilla, StandardCharsets.UTF_8);
-            System.out.println("input was: "+input);
+            //System.out.println("input was: "+input);
             sberrors.append(new String(berrorStream.readNBytes(berrorStream.available()), StandardCharsets.UTF_8));
             return available;
         } catch (IOException e) {
@@ -91,14 +89,19 @@ public class StreamsHandling implements Runnable {
         String ss = s.substring(s.indexOf(TRANSFERRRED)+TRANSFERRRED.length() + 1);
         String[] identtiset = ss.split(KAUTTA);
         if (identtiset.length > 1) {
-            Scanner sc = new Scanner(identtiset[0]);
-            sc.findInLine("\\s+([0-9]*\\.?[0-9]*) ([kMGT])iB\\s");
-            MatchResult result = sc.match();
-            double luku = Double.parseDouble(result.group(1));
-            //System.out.println("result.group 2: "+result.group(2)) ;
-            return toMB(luku, result.group(2));
+            try {
+                Scanner sc = new Scanner(identtiset[0]);
+                sc.findInLine("\\s+([0-9]*\\.?[0-9]*) ([kMGT])iB\\s");
+                MatchResult result = sc.match();
+                double luku = Double.parseDouble(result.group(1));
+                //System.out.println("result.group 2: "+result.group(2)) ;
+                return toMB(luku, result.group(2));
+            } catch (IllegalStateException ise) {
+                System.err.println(ise.getMessage()+s);
+                return -1;
+            }
         }
-        return 0;
+        return -2;
     }
 
     /**

@@ -18,15 +18,15 @@
 #
 ###
 FROM quay.io/quarkus/quarkus-micro-image:2.0
-WORKDIR /work/
-RUN chown 1001 /work \
-    && chmod "g+rwX" /work \
-    && chown 1001:root /work \
-    && touch /work/.rclone.conf \
-    && chown 1001 /work/.rclone.conf
-COPY --chown=1001:root target/*-runner /work/application
-COPY --chown=1001:root bin/rclone /work/rclone
+WORKDIR /deployments/
+RUN chown 1001 /deployments \
+    && chmod "g+rwX" //deployments \
+    && chown 1001:root /deployments \
+    && touch /deployments/.rclone.conf \
+    && chown 1001 /deployments/.rclone.conf
+COPY --chown=1001:root target/*-runner /deployments/application
+COPY --chown=1001:root bin/rclone /deployments/rclone
 
 USER 1001
 
-CMD ["./application", "--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED", "-Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true"]
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0", "--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED", "-Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager". "-Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true"]

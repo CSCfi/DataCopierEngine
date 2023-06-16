@@ -18,7 +18,7 @@
 #
 #
 ###
-FROM registry.access.redhat.com/ubi8/openjdk-17:1.11 
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.15
 
 #ARG JAVA_PACKAGE=java-17-openjdk-headless
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
@@ -37,7 +37,7 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 #    && echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/conf/security/java.security
 
 # Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
-ENV JAVA_OPTIONS="--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true"
+ENV JAVA_OPTIONS="--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -Xmx6096m"
 # We make four distinct layers so if there are application changes the library layers can be re-used
 COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
 COPY --chown=185 target/quarkus-app/*.jar /deployments/

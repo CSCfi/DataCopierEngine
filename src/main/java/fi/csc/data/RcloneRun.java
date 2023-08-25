@@ -67,6 +67,7 @@ public class RcloneRun {
             komento.add("vendor=" + rc.vendor);
             komento.add("url=" + rc.url);
             komento.add("pass=" + token);
+            komento.add("nextcloud_chunk_size=0");
         } else  if (!rc.open){ //allas
             if (!rc.env_auth)
                komento.add("env_auth=false");

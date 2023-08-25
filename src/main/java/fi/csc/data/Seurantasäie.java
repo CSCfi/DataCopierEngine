@@ -15,7 +15,7 @@ public class Seurantasäie  extends Thread {
          while (running) {
              System.out.println(this.getName() + " säie aktiivinen " + System.currentTimeMillis());
              try {
-                 Thread.sleep(2000);
+                 Thread.sleep(3000);
                  updataStatus();
              } catch (InterruptedException e) {
                 System.out.println("InterruptedException: "+e.getMessage());

@@ -44,7 +44,7 @@ public class StreamsHandling implements Runnable {
             int available = binputStream.available();
             byte[] saatavilla = binputStream.readNBytes(available);
             input = new String(saatavilla, StandardCharsets.UTF_8);
-            //System.out.println("input was: "+input);
+            System.out.println("input was: "+input);
             sberrors.append(new String(berrorStream.readNBytes(berrorStream.available()), StandardCharsets.UTF_8));
             return available;
         } catch (IOException e) {
